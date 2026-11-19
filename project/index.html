@@ -1,0 +1,280 @@
+<!doctype html>
+<meta charset="utf-8" />
+<link rel="icon" href="data:," />
+<title>RF HTML Tool — 目前使用</title>
+<script src="project-catalog.js"></script>
+<script src="cad-underlay.js"></script>
+<script src="cad-underlay-2.js"></script>
+<script src="rf-physical.js"></script>
+<script src="rf-budget.js"></script>
+<script src="rf-core.js"></script>
+<script src="rf-design.js"></script>
+<script src="rf-line.js"></script>
+<script src="rf-original.js"></script>
+<script src="rf-labels.js"></script>
+<script src="rf-plan.js"></script>
+<script src="rf-render.js"></script>
+<script src="rf-edit.js"></script>
+<script src="rf-scene.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<script src="vendor/pdf.worker.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/svg2pdf.umd.min.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="studio.css" />
+
+<header id="workspaceHeader">
+  <b class="brand">Ray<span>Tool</span></b>
+  <nav aria-label="Workspace">
+    <button data-workspace="layout" aria-pressed="true">Layout</button
+    ><button data-workspace="line">Line Diagram</button
+    ><button data-workspace="three">3D</button><button data-workspace="excel">Excel</button>
+  </nav>
+  <label class="floorPick">樓層
+    <select id="reviewFloor">
+      <option>B4</option><option>B3</option><option>B2</option><option>B1</option><option>LG</option>
+      <option value="L1">L1</option><option>L1M</option><option>L2</option><option>L3</option><option>L3M</option>
+      <option>L4</option><option>L4M1</option><option>L4M2</option><option>L5</option><option>L5M1</option><option>L5M2</option>
+    </select></label>
+  <span class="headerSpace"></span>
+  <button id="reviewBack" hidden>返回 Checks</button>
+  <!-- one file menu: floor JSON, whole project, workbook and the all-floor audit -->
+  <details class="fileMenu">
+    <summary class="action">檔案 ▾</summary>
+    <div class="fileMenuPanel">
+      <label class="file">開啟樓層 JSON…<input type="file" id="load" accept=".json" /></label>
+      <button id="save">儲存樓層 JSON</button>
+      <hr />
+      <label class="file">開啟全專案（.raytool）…<input id="projectOpen" type="file" accept=".raytool" /></label>
+      <button id="projectSave">儲存全專案（.raytool）</button>
+      <button id="projectSaveFull" title="連 CAD 底圖一起存（約 75 MB），在任何一份工具都能帶底圖打開">儲存全專案（含底圖）</button>
+      <button id="resetLocal" title="清除瀏覽器裡的自動保存，重新載入 repo 的資料">放棄本機修改，改用 repo 最新資料</button>
+      <hr />
+      <button id="projectExcel">匯出本層 Excel</button>
+      <button id="projectAudit">全樓層資料審查</button>
+    </div>
+  </details>
+  <button class="action export" id="exportCurrent">匯出 Layout PDF</button>
+  <span id="projectState">載入中</span>
+</header>
+<div id="rail">
+  <section class="grp">
+    <b>視圖</b>
+    <div class="btnRow">
+      <button class="btn" id="fitFloor" title="整張圖紙">全圖</button
+      ><button class="btn" id="fitNetwork" title="只看 RF 網絡範圍">RF 網絡</button
+      ><button class="btn" id="focusSelected" title="縮放到選取項目">選取項目</button>
+    </div>
+  </section>
+
+  <section class="grp">
+    <b>工具</b>
+    <button class="tool" data-tool="select" aria-pressed="true">選取 / 移動<kbd>V</kbd></button>
+    <button class="tool" data-tool="draw">畫電纜<kbd>L</kbd></button>
+    <div class="cableTypes" title="畫電纜時用的線材">
+      <button class="tool cable" data-cable="LCK" aria-pressed="true"><i class="swatch" style="background: var(--lck)"></i>漏纜</button
+      ><button class="tool cable" data-cable="COX12"><i class="swatch" style="background: var(--cox12)"></i>1/2"</button
+      ><button class="tool cable" data-cable="COX114"><i class="swatch" style="background: var(--cox114)"></i>1¼"</button>
+    </div>
+    <button class="tool" data-tool="device">插入元件<kbd>C</kbd></button>
+    <select id="insertDeviceType" title="要插入的元件">
+      <option value="DC6">6 dB coupler</option>
+      <option value="DC10">10 dB coupler</option>
+      <option value="DC15">15 dB coupler</option>
+      <option value="SPL2">2-way splitter</option>
+      <option value="SPL3">3-way splitter</option>
+      <option value="POI">POI</option>
+    </select>
+    <button class="tool" data-tool="antenna">插入天線<kbd>A</kbd></button>
+    <button class="tool" data-tool="source">設為訊號源<kbd>S</kbd></button>
+    <button class="tool" data-tool="testpoint">點 TestPoint<kbd>P</kbd></button>
+    <button class="tool" data-tool="scale">校準比例<kbd>K</kbd></button>
+    <p class="hint">Shift 拖曳鎖定水平／垂直／45° · Alt 或中鍵拖曳平移 · Ctrl+Z 復原 · 拖動文字調整標籤</p>
+  </section>
+
+  <section class="grp">
+    <b>圖層</b>
+    <p class="sub">網絡</p>
+    <div class="chk">
+      <label><input type="checkbox" data-vis="symAnt" checked />天線</label>
+      <label><input type="checkbox" data-vis="symDev" checked />元件</label>
+      <label><input type="checkbox" data-vis="symSource" checked />訊號源</label>
+      <label><input type="checkbox" data-vis="cabLCK" checked />漏纜</label>
+      <label><input type="checkbox" data-vis="cabCOX12" checked />1/2" coax</label>
+      <label><input type="checkbox" data-vis="cabCOX114" checked />1-1/4" coax</label>
+      <label class="wide"><input type="checkbox" data-vis="rxWarnings" checked />低於 −85 dBm 標紅（RX 紅圈、TestPoint 紅框）</label>
+    </div>
+    <p class="sub">標籤 <button class="tool mini" id="tLbl" aria-pressed="true" title="全部標籤開／關">全部<kbd>T</kbd></button></p>
+    <div class="chk">
+      <label><input type="checkbox" data-vis="lblAnt" checked />天線</label>
+      <label><input type="checkbox" data-vis="lblDev" checked />元件 dB</label>
+      <label><input type="checkbox" data-vis="lblSource" checked />訊號源</label>
+      <label><input type="checkbox" data-vis="lblLen" checked />長度</label>
+      <label><input type="checkbox" data-vis="lblLCK" checked />漏纜名</label>
+      <label><input type="checkbox" data-vis="lblCOX12" checked />1/2" 名</label>
+      <label><input type="checkbox" data-vis="lblCOX114" checked />1-1/4" 名</label>
+      <label><input type="checkbox" data-vis="legend" checked />圖例</label>
+    </div>
+    <div class="row sizeRow" title="標籤字體大小"><span>字體</span><input type="range" id="uiFont" min="4" max="28" step="0.5" value="9" /><input type="number" id="uiFontNumber" min="4" max="28" step="0.5" value="9" /></div>
+    <div class="row sizeRow" title="符號大小"><span>符號</span><input type="range" id="uiSym" min="0.4" max="2.2" step="0.1" value="1" /></div>
+    <button class="btn" id="arrangeLabels" title="重新自動排位所有標籤（保留手動拖過的位置）">自動排位標籤</button>
+    <p class="hint" id="labelFeedback"></p>
+    <p class="sub">TestPoint</p>
+    <div class="chk">
+      <label class="wide" title="TestPoint PDF：TP、測量讀數、房間、樓梯讀數"><input type="checkbox" data-vis="testPoints" checked />顯示 TestPoint</label>
+    </div>
+    <div class="tp-bands" title="只顯示勾選頻段的數值">
+      <label class="b400"><input type="checkbox" data-vis="tpb400" checked />400</label
+      ><label class="b800"><input type="checkbox" data-vis="tpb800" checked />800</label
+      ><label class="b1795"><input type="checkbox" data-vis="tpb1795" checked />1795</label
+      ><label class="b1910"><input type="checkbox" data-vis="tpb1910" checked />1910</label>
+    </div>
+    <div class="chk">
+      <label class="wide" title="TestPoint PDF 上原有的圖面文字（ELV、To L1 等），不是房間名"><input type="checkbox" data-vis="tpNotes" checked />圖面備註</label>
+    </div>
+  </section>
+
+  <section class="grp">
+    <b>底圖</b>
+    <div class="chk">
+      <label class="wide"><input type="checkbox" data-vis="background" checked />CAD 底圖</label>
+    </div>
+    <div class="row"><span>顯示</span><select id="cadBackgroundMode"><option value="clean">只有建築</option><option value="original">CAD 原圖</option></select></div>
+    <details class="underlaySettings">
+      <summary>更換 PDF 底圖／對齊</summary>
+      <label class="file btn">開啟 PDF 底圖…<input type="file" id="fpdf" accept="application/pdf" /></label>
+      <div class="row"><span>頁</span><input type="number" id="page" value="1" min="1" style="flex: 0 0 60px" /></div>
+      <div id="underlayFields"></div>
+      <button class="btn" id="applyUnderlay">套用對齊</button
+      ><button class="btn" id="resetUnderlay">還原本層對齊</button>
+    </details>
+  </section>
+
+  <div hidden>
+    <button id="genTopo"></button><button id="expPdf"></button><button id="expXls"></button>
+  </div>
+</div>
+
+<div id="stage">
+  <canvas id="detailPdf"></canvas>
+  <div id="pan"><canvas id="pdf"></canvas><svg id="svg"></svg></div>
+  <div id="empty">
+    <b>開啟樓層 JSON 或 PDF 底圖</b
+    ><span>然後按 L 開始畫電纜</span>
+  </div>
+</div>
+
+<div id="side">
+  <section class="grp">
+    <b>選取項目</b>
+    <div id="insp"><p class="hint">在圖上點選電纜、元件或天線。</p></div>
+  </section>
+  <section class="grp">
+    <b>本層統計</b>
+    <div id="stats"></div>
+  </section>
+  <details class="grp settings">
+    <summary><b>新編號及樓梯預留設定</b></summary>
+    <div class="row"><span>樓層</span><input id="pfFloor" value="B1" /></div>
+    <div class="row"><span>頻段</span><select id="pfBand"><option>H</option><option>L</option></select></div>
+    <div class="row"><span>COX 前綴</span><input id="nameCOX" placeholder="空白或 A" /></div>
+    <div class="row"><span>ANT 前綴</span><input id="nameANT" value="A" /></div>
+    <div class="row"><span>LCK 前綴</span><input id="nameLCK" value="A" /></div>
+    <p class="hint">現有 CAD 編號不變；新元件用此前綴加一個未用的三位數。</p>
+    <div class="row"><span>樓梯預留</span><input type="number" id="stairDefault" value="100" min="0" /> m</div>
+  </details>
+</div>
+
+<div id="status">
+  <span>比例 <b id="sScale">未設定</b></span>
+  <span>節點 <b id="sNodes">0</b></span>
+  <span>電纜 <b id="sEdges">0</b></span>
+  <span id="sOrph"></span>
+  <span id="sMsg"></span>
+</div>
+
+<div id="reviewFocus" hidden><button id="reviewFocusClose">×</button><span id="reviewFocusText"></span></div><section id="excelWorkspace" hidden>
+  <header>
+    <div>
+      <b>Excel / Link Budget</b>
+      <p>本層 · 和 Layout、Line Diagram 同一份資料；匯出的 Excel 與這裡的預覽相同</p>
+    </div>
+    <button class="action" id="refreshExcel" title="按目前資料重新計算">重新計算</button>
+  </header>
+  <div id="sheetTabs"></div>
+  <p id="excelHint"></p>
+  <div id="sheetTable"></div>
+</section>
+<div id="topo">
+  <header>
+    <b id="drawingTitle">RF line diagram</b
+    ><span
+      id="topoInfo"
+      style="color: var(--dim); font: 12px var(--mono)"
+    ></span>
+    <span class="sp"></span>
+    <button class="btn" style="width: auto; margin: 0" id="topoSheet">
+      適合視窗</button
+    ><button class="btn" style="width: auto; margin: 0" id="topoFit">
+      適合寬度</button
+    ><button class="btn" style="width: auto; margin: 0" id="topo100">
+      100%</button
+    ><button class="btn" style="width: auto; margin: 0" id="topoMinus">−</button
+    ><span id="topoPercent">100%</span
+    ><button class="btn" style="width: auto; margin: 0" id="topoPlus">+</button>
+
+    <details id="lineLabelMenu" class="lineLabelMenu">
+      <summary>標籤顯示 ▾</summary>
+      <div class="lineLabelPanel">
+        <b>Line diagram 標籤</b>
+        <div class="lineLabelActions"><button data-line-label-all="show">全部顯示</button><button data-line-label-all="hide">全部隱藏</button></div>
+        <table><thead><tr><th>線材</th><th>線名</th><th>長度</th></tr></thead><tbody>
+<tr><th>1/2" coax</th><td><input type="checkbox" data-line-label="nameCOX12" aria-label="COX12 線名" checked></td><td><input type="checkbox" data-line-label="lengthCOX12" aria-label="COX12 長度" checked></td></tr>
+<tr><th>1-1/4" coax</th><td><input type="checkbox" data-line-label="nameCOX114" aria-label="COX114 線名" checked></td><td><input type="checkbox" data-line-label="lengthCOX114" aria-label="COX114 長度" checked></td></tr>
+<tr><th>LCX 漏纜</th><td><input type="checkbox" data-line-label="nameLCK" aria-label="LCK 線名" checked></td><td><input type="checkbox" data-line-label="lengthLCK" aria-label="LCK 長度" checked></td></tr>
+<tr><th>其他線材</th><td><input type="checkbox" data-line-label="nameUNRESOLVED" aria-label="UNRESOLVED 線名" checked></td><td><input type="checkbox" data-line-label="lengthUNRESOLVED" aria-label="UNRESOLVED 長度" checked></td></tr>
+</tbody></table>
+<label><input type="checkbox" data-line-label="antenna" checked> 天線標籤</label>
+<label><input type="checkbox" data-line-label="device" checked> Coupler / Splitter dB</label>
+<label><input type="checkbox" data-line-label="ports" checked> IN / THRU / COUPLED / OUT</label>
+<label><input type="checkbox" data-line-label="source" checked> ORU / Source 標籤</label>
+<label><input type="checkbox" data-line-label="stairs" checked> 樓梯 From / To</label>
+<label><input type="checkbox" data-line-label="legend" checked> 圖例</label>
+<p>只影響 line diagram；PDF 跟隨目前設定。設定隨 JSON 儲存。</p></div></details>
+    <label
+      >標籤大小
+      <input
+        id="topoFont"
+        type="number"
+        min="4"
+        max="28"
+        step="0.5"
+        value="9"
+        style="width: 60px" /></label
+    ><button class="btn" style="width: auto; margin: 0" id="arrangeTopoLabels">
+      自動排位</button
+    ><button hidden id="topoPdf">Export PDF</button>
+  </header>
+  <div class="lineNavigationHint">滾輪：指向縮放 · 拖曳空白／中鍵／空白鍵＋拖曳：平移 · 雙擊空白：適合視窗 · 拖曳標籤：調整位置</div><div id="topowrap" tabindex="0" aria-label="Line diagram，滾輪縮放及拖曳平移"></div>
+</div>
+
+<style>*{box-sizing:border-box}#threeHost{margin:0;background:#101c2a;color:#dfebf5;font:14px system-ui}#threeHost aside{width:330px;height:100vh;overflow:auto;padding:22px;border-right:1px solid #334455}#threeHost h1{font-size:25px}#threeHost p{color:#a6bbcc;line-height:1.6}#threeHost label{display:block;margin:14px 0}#threeHost select,#threeHost button,#threeHost input{background:#21364a;color:white;border:1px solid #4a667e;padding:8px;border-radius:5px;max-width:100%}#threeHost select{width:100%}#threeHost button{cursor:pointer;margin:4px}#threeHost #view{position:absolute;left:330px;right:0;top:0;bottom:0}#threeHost pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}#threeHost a{color:#83caff}#threeHost .offset input{width:70px} #threeHost{position:fixed;inset:64px 0 0;z-index:35;background:#101c2a}#threeHost[hidden]{display:none}#threeHost aside{height:100%;background:#101c2a}body[data-project-mode="three"] #rail,body[data-project-mode="three"] #stage{visibility:hidden}#workspaceHeader{z-index:70}#projectState{font-size:11px;color:#45745b}#auditPanel{position:fixed;inset:70px 20px 20px;background:white;z-index:100;overflow:auto;padding:20px;box-shadow:0 0 0 100vmax #0008}#auditPanel[hidden]{display:none}#auditPanel table{border-collapse:collapse;width:100%;font-size:12px}#auditPanel td,#auditPanel th{border:1px solid #ccc;padding:6px;max-width:500px;overflow-wrap:anywhere}#selectionEdit input{width:100%}</style><div id="threeHost" hidden><aside><h1>RayTool <span style="color:#83caff">3D</span></h1><p>跨樓層供訊示意 · 拖曳旋轉，滾輪縮放，右鍵平移。點選線段或元件查看資料。</p><label>訊號源<select id="source"></select></label><label>樓層<select id="floor"><option value="">全部樓層</option></select></label><label>頻率<select id="freq"><option>400</option><option>850</option><option selected="">1950</option></select></label><label>樓層展開距離 <input id="spacing" max="35" min="4" type="range" value="12"/></label><label><input checked="" id="planes" type="checkbox"/> PDF 建築底圖</label><label>樓梯井示意寬度 <input id="stairWidth" type="range" min="1" max="8" value="3" step="0.5"/></label><label><input checked="" id="cross" type="checkbox"/> 跨層接口（金色）</label><label><input checked="" id="labels" type="checkbox"/> ORU／單層輸入名稱</label><p>線色：藍 1/2″／紅 1-1/4″／綠 漏纜<br/>元件端口：IN 藍／THRU 綠／COUPLED 橙／OUT 紫<br/>金色機箱：ORU 所在樓層；虛線：模型來源參考，不是新增電纜。15 層按共同建築軸網對位，LG 仍近似；房框差異見 Checks。高度、元件尺寸與梯段形狀為示意；計算長度沿用原 JSON。只連接明確 upstream 接口，樓梯位置參考不會自動接線。</p><button id="reset">重設視角</button><button id="png">匯出 PNG</button><details><summary>調整單層位置／保存視圖</summary><div class="offset"><p>X / 高度 / Z 位移（示意米）</p><input id="dx" type="number" value="0"/><input id="dy" type="number" value="0"/><input id="dz" type="number" value="0"/></div><button id="apply">套用位移</button><button id="save">保存視圖設定</button><input accept=".json" id="viewload" type="file"/></details><label><input type="checkbox" id="references"> 顯示樓梯位置參考（非供訊路徑）</label><p id="status"></p><pre id="details">選擇線段、天線或元件。</pre><section id="selectionEdit"><h3>選取項目編輯</h3><label>名稱<input id="editName"/></label><label id="lengthRow">線段長度（整數米）<input id="editLength" min="0" step="1" type="number"/></label><label id="deviceRow">元件<select id="editDevice"><option>DC6</option><option>DC10</option><option>DC15</option><option>SPL2</option><option>SPL3</option></select></label><div id="portRows"></div><div id="upstreamRows" hidden><h3>跨層輸入接口</h3><label>上游樓層<select id="upFloor"></select></label><label>上游節點<select id="upNode"></select></label><label>元件輸出 port<select id="upExit"></select></label><p>選元件時必須指定輸出；不會自動增加豎向電纜長度。選「未連接」可解除接口。</p></div><button id="applyEdit">套用修改</button><button id="editLayout">在 Layout 編輯接線／位置</button><p id="editMessage"></p></section></aside><main id="view"></main></div><section id="auditPanel" hidden><button id="auditClose">關閉</button><h2>全樓層資料審查</h2><p id="auditSummary"></p><label>樓層 <select id="auditFloor"><option value="">全部</option></select></label><input id="auditSearch" placeholder="搜尋名稱、ID 或問題"><button id="auditExport">匯出核對 JSON</button><p>文件核對基準：2026-11-06。即時接線／預算依目前編輯資料計算；文件比對項在修改後仍需覆核。</p><table><thead><tr><th>樓層</th><th>類別</th><th>項目</th><th>ID</th><th>依據／問題</th><th>操作</th></tr></thead><tbody id="auditRows"></tbody></table></section><script src="rf-excel.js"></script>
+<script src="rf-export.js"></script>
+<script src="rf-editor.js"></script>
+<script src="rf-tool.js"></script>
+<script src="rf-cross-floor.js"></script>
+<script src="rf-workspace.js"></script>
+<script src="rf-layout-edit.js"></script>
+<script src="rf-design-ui.js"></script><script src="oru-groups.js"></script><script src="evidence-audit.js"></script><script src="spatial-data.js"></script><script src="project-studio.js"></script><script src="line-navigation.js"></script><script src="review-register.js"></script><script src="oru-assets.js"></script><script src="testpoints.js"></script><script src="testpoint-edit.js"></script><script src="project-checks.js"></script>
+<script>
+  setTool("select");
+  initializeReviewCatalog()
+    .then(async () => {await ProjectStudio.restore();setWorkspace("layout");await ProjectChecks.openLink();})
+    .catch((error) => {
+      msg("Drawing failed to load: " + error.message);
+      clearTimeout(msgT);
+      console.error(error);
+    });
+</script>
+
