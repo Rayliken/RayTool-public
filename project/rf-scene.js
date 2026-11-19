@@ -25,21 +25,33 @@
       seen = new Set();
     // every label is drawn like the TestPoint cards: white box (LABEL_BG opacity) with a frame in the label's colour
     // (user 2026-11-19: 所有的 label 都改成 testpoint 紫色 label 一樣的形式，平時也有白底和框，透明度再高一點)
-    function label(x, y, lines, key, attrs, color, size = fs) {
+    // ... and, like the TestPoint card headings, in bold with a deeper colour (user 2026-11-19: label 的字體和顏色加粗加深)
+    function deep(c) {
+      const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c || ""));
+      if (!m) return c;
+      const h = m[1].length === 3 ? [...m[1]].map((x) => x + x).join("") : m[1];
+      let [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let H = 0, S = 0; const Lm = (mx + mn) / 2, d = mx - mn;
+      if (d) { S = d / (1 - Math.abs(2 * Lm - 1)); H = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; H *= 60; if (H < 0) H += 360; }
+      const S2 = Math.min(1, S * 1.15 + 0.05), L2 = Math.max(0.12, Lm * 0.72), C2 = (1 - Math.abs(2 * L2 - 1)) * S2, X = C2 * (1 - Math.abs(((H / 60) % 2) - 1)), M0 = L2 - C2 / 2;
+      const [r1, g1, b1] = H < 60 ? [C2, X, 0] : H < 120 ? [X, C2, 0] : H < 180 ? [0, C2, X] : H < 240 ? [0, X, C2] : H < 300 ? [X, 0, C2] : [C2, 0, X];
+      return "#" + [r1, g1, b1].map((v) => Math.round((v + M0) * 255).toString(16).padStart(2, "0")).join("");
+    }
+    function label(x, y, lines, key, attrs, color0, size = fs) {
       if (!on || !lines.length) return "";
       const L = lines.filter(Boolean);
       if (!L.length) return "";
-      const tx = x + 10 * k, ty = y - 9 * k;
-      return `<g class="rf-label" data-rf-label="true" data-label-key="${esc(key)}" data-anchor="${x},${y}" ${attrs}>${labelBox(tx, ty, L.map((s) => s?.t ?? s), size, color, "start")}<text x="${tx}" y="${ty}" fill="${color}" font-size="${size}">${L
+      const tx = x + 10 * k, ty = y - 9 * k, color = deep(color0);
+      return `<g class="rf-label" data-rf-label="true" data-label-key="${esc(key)}" data-anchor="${x},${y}" ${attrs}>${labelBox(tx, ty, L.map((s) => s?.t ?? s), size, color, "start")}<text x="${tx}" y="${ty}" fill="${color}" font-size="${size}" font-weight="700">${L
         .map(
           (s, i) =>
-            `<tspan x="${tx}" dy="${i ? size * 1.2 : 0}"${s?.c ? ` fill="${s.c}"` : ""}>${esc(s?.t ?? s)}</tspan>`,
+            `<tspan x="${tx}" dy="${i ? size * 1.2 : 0}"${s?.c ? ` fill="${deep(s.c)}"` : ""}>${esc(s?.t ?? s)}</tspan>`,
         )
         .join("")}</text></g>`;
     }
     // the box behind a label: text starting (or centred, anchor "middle") at tx, first baseline at ty
     function labelBox(tx, ty, texts, size, color, anchor) {
-      const pad = size * 0.32, w = Math.max(...texts.map((t) => tw(t, size))) + 2 * pad,
+      const pad = size * 0.32, w = Math.max(...texts.map((t) => tw(t, size) * 1.08)) + 2 * pad,   // bold is ~8% wider
         h = size * (1.2 * (texts.length - 1) + 1.15) + 2 * pad, x0 = anchor === "middle" ? tx - w / 2 : tx - pad;
       return `<rect x="${x0}" y="${ty - size * 0.88 - pad}" width="${w}" height="${h}" rx="${size * 0.18}" fill="white" fill-opacity="${LABEL_BG}" stroke="${color}" stroke-width="${0.6 * k}"/>`;
     }
@@ -243,7 +255,7 @@
         {
           const t = `${n.dev === "DC_PENDING" ? "?" : n.dev.slice(2)} dB`;
           parts.push(
-            `<g class="rf-label" data-device-db="${esc(n.id)}" data-n="${esc(n.id)}" data-rf-label="true" data-label-key="db:${esc(n.id)}" data-anchor="${x},${y}">${labelBox(x, y + 28 * k, [t], fs, "#715114", "middle")}<text x="${x}" y="${y + 28 * k}" text-anchor="middle" fill="#715114" font-size="${fs}">${esc(t)}</text></g>`,
+            `<g class="rf-label" data-device-db="${esc(n.id)}" data-n="${esc(n.id)}" data-rf-label="true" data-label-key="db:${esc(n.id)}" data-anchor="${x},${y}">${labelBox(x, y + 28 * k, [t], fs, deep("#715114"), "middle")}<text x="${x}" y="${y + 28 * k}" text-anchor="middle" fill="${deep("#715114")}" font-size="${fs}" font-weight="700">${esc(t)}</text></g>`,
           );
         }
       // the end of a stair cable ("LT15c / To L4") repeats the stair cable's own label (stair no. · From .. to ..): not drawn
