@@ -141,13 +141,16 @@
             const key = origin + ":" + i;
             if (seen.has(key)) continue;
             seen.add(key);
-            (s.ids || []).forEach((id) => sectionNames.add(id));
+            // a CAD section label often carries only the H name: shown with its L pair, like the cable's own label
+            // (user 2026-11-19: 部份 cox cable 的 label 只顯示 H)
+            const ids = [...new Set((s.ids || []).flatMap((id) => (/-H-/.test(id) ? [id, id.replace("-H-", "-L-")] : [id])))];
+            ids.forEach((id) => sectionNames.add(id));
             const anchor = s.anchor || s.anchor_reference || [x, y];
             text += label(
               anchor[0],
               anchor[1],
               [
-                ...(v["lbl" + e.cable] ? s.ids || [] : []),
+                ...(v["lbl" + e.cable] ? ids : []),
                 ...(v.lblLen && (s.display_m ?? s.cad_m) != null
                   ? [Math.round(Number(s.display_m ?? s.cad_m)) + " m"]
                   : []),
