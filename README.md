@@ -15,13 +15,6 @@ address) in Chrome or Edge.
   the cable to add one).
 - Work is kept in the browser; use **儲存樓層 JSON** / **儲存全專案** to keep a file.
 
-## Programme Studio
-
-A separate browser tool for editing an engineering master programme (Gantt chart): MS Project-compatible scheduling,
-"why this date" tracing, MS Project XML import / export and print-ready PDF. Open
-[`programme-studio/index.html`](programme-studio/index.html), or
-<https://rayliken.github.io/RayTool-public/programme-studio/>. Nothing is uploaded.
-
 ## Notes
 
 - This package holds the tool only. No project data, drawings or results are included.

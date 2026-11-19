@@ -23,15 +23,25 @@
         `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Arial,Helvetica,sans-serif">`,
       ],
       seen = new Set();
+    // every label is drawn like the TestPoint cards: white box (LABEL_BG opacity) with a frame in the label's colour
+    // (user 2026-11-19: 所有的 label 都改成 testpoint 紫色 label 一樣的形式，平時也有白底和框，透明度再高一點)
     function label(x, y, lines, key, attrs, color, size = fs) {
       if (!on || !lines.length) return "";
-      return `<text data-rf-label="true" data-label-key="${esc(key)}" data-anchor="${x},${y}" ${attrs} x="${x + 10 * k}" y="${y - 9 * k}" fill="${color}" font-size="${size}" stroke="white" stroke-width="${size * 0.12}" paint-order="stroke" stroke-linejoin="round">${lines
-        .filter(Boolean)
+      const L = lines.filter(Boolean);
+      if (!L.length) return "";
+      const tx = x + 10 * k, ty = y - 9 * k;
+      return `<g class="rf-label" data-rf-label="true" data-label-key="${esc(key)}" data-anchor="${x},${y}" ${attrs}>${labelBox(tx, ty, L.map((s) => s?.t ?? s), size, color, "start")}<text x="${tx}" y="${ty}" fill="${color}" font-size="${size}">${L
         .map(
           (s, i) =>
-            `<tspan x="${x + 10 * k}" dy="${i ? size * 1.2 : 0}"${s?.c ? ` fill="${s.c}"` : ""}>${esc(s?.t ?? s)}</tspan>`,
+            `<tspan x="${tx}" dy="${i ? size * 1.2 : 0}"${s?.c ? ` fill="${s.c}"` : ""}>${esc(s?.t ?? s)}</tspan>`,
         )
-        .join("")}</text>`;
+        .join("")}</text></g>`;
+    }
+    // the box behind a label: text starting (or centred, anchor "middle") at tx, first baseline at ty
+    function labelBox(tx, ty, texts, size, color, anchor) {
+      const pad = size * 0.32, w = Math.max(...texts.map((t) => tw(t, size))) + 2 * pad,
+        h = size * (1.2 * (texts.length - 1) + 1.15) + 2 * pad, x0 = anchor === "middle" ? tx - w / 2 : tx - pad;
+      return `<rect x="${x0}" y="${ty - size * 0.88 - pad}" width="${w}" height="${h}" rx="${size * 0.18}" fill="white" fill-opacity="${LABEL_BG}" stroke="${color}" stroke-width="${0.6 * k}"/>`;
     }
     function length(e) {
       if (e.route_status === "INHERITED_STAIR_REFERENCE") return `${e.reference_reserve_m ?? 100} m`;
@@ -42,7 +52,7 @@
     }
     // Card: white box, header line(s) and one row per band with a colour chip (BAND_COLOR); values below -85 dBm get a red
     // frame. Shared by every TestPoint annotation and by antenna labels that carry test values.
-    const fh = fs * 0.86, fr = fs * 0.78;
+    const fh = fs * 0.86, fr = fs * 0.78, LABEL_BG = 0.78;   // white box opacity of labels and cards
     const tw = (str, size) => [...String(str)].reduce((w, ch) => w + (ch.codePointAt(0) > 0x2e80 ? size : size * 0.58), 0);
     // card(cx, cy, head, rows, o): head = {t: text or [lines], color, frame, size, weight}; rows = [{b, t, low}] or [{t, c}]
     const card = (cx, cy, head, rows, o = {}) => {
@@ -52,7 +62,7 @@
       const w = Math.max(...hl.map((t) => tw(t, hs)), ...rows.map(rowW), fr * 2) + 2 * pad;
       const h = (head ? hh : pad * 0.7) + rows.length * rh + (rows.length ? pad * 0.7 : 0);
       const x = cx - w / 2, y = cy - h / 2, frame = o.frame || "#333";
-      let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${fr * 0.18}" fill="white" fill-opacity="0.94" stroke="${frame}" stroke-width="${0.6 * k}"/>`;
+      let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${fr * 0.18}" fill="white" fill-opacity="${LABEL_BG}" stroke="${frame}" stroke-width="${0.6 * k}"/>`;
       if (head) {
         if (head.frame) s += `<rect data-role="room-frame" x="${x}" y="${y}" width="${w}" height="${hh}" rx="${fr * 0.18}" fill="white" stroke="${head.frame}" stroke-width="${1.1 * k}"/>`;
         else if (rows.length) s += `<line x1="${x}" y1="${y + hh}" x2="${x + w}" y2="${y + hh}" stroke="${frame}" stroke-width="${0.35 * k}" opacity="0.5"/>`;
@@ -230,9 +240,12 @@
         } else parts.push(label(x, y, C.labels(m, n), "node:" + n.id, attrs, col));
       }
       if (n.kind === "device" && v.lblDev && on && /^DC(?:\d+|_PENDING)$/.test(n.dev))
-        parts.push(
-          `<text data-device-db="${esc(n.id)}" data-n="${esc(n.id)}" data-rf-label="true" data-label-key="db:${esc(n.id)}" data-anchor="${x},${y}" x="${x}" y="${y + 28 * k}" text-anchor="middle" fill="#715114" font-size="${fs}" stroke="white" stroke-width="${fs * 0.12}" paint-order="stroke">${esc(n.dev === "DC_PENDING" ? "?" : n.dev.slice(2))} dB</text>`,
-        );
+        {
+          const t = `${n.dev === "DC_PENDING" ? "?" : n.dev.slice(2)} dB`;
+          parts.push(
+            `<g class="rf-label" data-device-db="${esc(n.id)}" data-n="${esc(n.id)}" data-rf-label="true" data-label-key="db:${esc(n.id)}" data-anchor="${x},${y}">${labelBox(x, y + 28 * k, [t], fs, "#715114", "middle")}<text x="${x}" y="${y + 28 * k}" text-anchor="middle" fill="#715114" font-size="${fs}">${esc(t)}</text></g>`,
+          );
+        }
       // the end of a stair cable ("LT15c / To L4") repeats the stair cable's own label (stair no. · From .. to ..): not drawn
       // user 2026-11-18: every stair cable reads feed port -> cable -> "To L5M2" (the floor it goes to), or "LT13D end" on that
       // floor itself; the end label replaces the CAD text ("LT15c / To L4") that repeated the cable label
