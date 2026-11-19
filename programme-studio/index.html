@@ -1,0 +1,1269 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body><title>Programme Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: engineering workbench. Toolbar on top, task sheet + Gantt split in the middle, inspector rail on the right, status strip below. */
+:root {
+  --bg: #eef0f3; --surface: #ffffff; --surface-2: #f5f6f8; --line: #d6dae1; --line-strong: #a9b0bc;
+  --fg: #1b2230; --muted: #5d6676; --accent: #2b55c9; --accent-weak: #e4ebfb; --sel: #dfe7fb;
+  --bar: #5266e0; --bar-edge: #2a3db0; --sum: #2b303a; --crit: #d0383a; --crit-edge: #9c1f22;
+  --ok: #24804f; --warn: #a86a0f; --err: #c22f32; --dl: #2e9a46; --link: #3346c9; --weekend: #f1f2f5;
+  --f-ui: "IBM Plex Sans", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --rh: 26px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151b; --surface: #1a1e26; --surface-2: #20252f; --line: #2e3440; --line-strong: #485062;
+  --fg: #e3e7ee; --muted: #98a1b2; --accent: #7e9dff; --accent-weak: #22305a; --sel: #26324f;
+  --bar: #6b7ff0; --bar-edge: #9aa8ff; --sum: #d7dbe3; --crit: #ff6b6b; --crit-edge: #ffa0a0;
+  --ok: #4cc584; --warn: #e3a845; --err: #ff6b6b; --dl: #4cc56a; --link: #8fa2ff; --weekend: #171b22; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151b; --surface: #1a1e26; --surface-2: #20252f; --line: #2e3440; --line-strong: #485062;
+  --fg: #e3e7ee; --muted: #98a1b2; --accent: #7e9dff; --accent-weak: #22305a; --sel: #26324f;
+  --bar: #6b7ff0; --bar-edge: #9aa8ff; --sum: #d7dbe3; --crit: #ff6b6b; --crit-edge: #ffa0a0;
+  --ok: #4cc584; --warn: #e3a845; --err: #ff6b6b; --dl: #4cc56a; --link: #8fa2ff; --weekend: #171b22; color-scheme: dark }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 13px; }
+* { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.app { height: 100%; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.top { display: flex; align-items: center; gap: 12px; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--surface); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+.mark { width: 18px; height: 18px; display: grid; grid-template-rows: repeat(3, 1fr); gap: 2px; }
+.mark i { display: block; height: 4px; background: var(--accent); border-radius: 1px; }
+.mark i:nth-child(1) { width: 60%; } .mark i:nth-child(2) { width: 85%; margin-left: 25%; } .mark i:nth-child(3) { width: 45%; margin-left: 55%; background: var(--crit); }
+#projName { min-width: 0; flex: 1 1 220px; max-width: 420px; border: 1px solid transparent; background: transparent; padding: 4px 8px; border-radius: 6px; font-weight: 500; }
+#projName:hover, #projName:focus { border-color: var(--line); background: var(--surface-2); outline: none; }
+.spacer { flex: 1; }
+.tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-block: 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.grp { display: flex; gap: 2px; padding-right: 6px; margin-right: 2px; border-right: 1px solid var(--line); }
+.grp:last-child { border-right: 0; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--line-strong); }
+.btn:focus-visible, .ic:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.on { background: var(--accent-weak); border-color: var(--accent); }
+.ic { height: 30px; min-width: 30px; padding: 0 7px; border: 1px solid transparent; background: transparent; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.ic:hover { background: var(--surface); border-color: var(--line); }
+.ic svg, .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ic .lbl { font-size: 12px; }
+select.sm { height: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 0 6px; }
+
+.work { display: flex; min-height: 0; min-width: 0; }
+.pane { overflow: auto; min-width: 0; position: relative; background: var(--surface); }
+#gridPane { flex: none; width: 600px; max-width: 70%; }
+#chartPane { flex: 1 1 auto; }
+.split { flex: none; width: 6px; cursor: col-resize; background: var(--line); border-left: 1px solid var(--line-strong); }
+.split:hover { background: var(--accent); }
+
+.ghead { position: sticky; top: 0; z-index: 3; background: var(--surface-2); border-bottom: 2px solid var(--line-strong); height: 46px; }
+.grid { width: max-content; min-width: 100%; }
+.r { display: grid; grid-template-columns: var(--cols); height: var(--rh); border-bottom: 1px solid var(--line); }
+.ghead .r { height: 44px; border: 0; }
+.ghead .c { font-weight: 600; font-size: 12px; color: var(--muted); align-items: flex-end; padding-bottom: 6px; }
+.c { display: flex; align-items: center; padding: 0 6px; border-right: 1px solid var(--line); overflow: hidden; white-space: nowrap; min-width: 0; }
+.c.num { justify-content: flex-end; font-family: var(--f-num); font-size: 12px; font-variant-numeric: tabular-nums; }
+.c.idc { justify-content: center; color: var(--muted); font-family: var(--f-num); font-size: 12px; background: var(--surface-2); position: sticky; left: 0; z-index: 1; }
+.c.name { gap: 4px; }
+.c.name .tx { overflow: hidden; text-overflow: ellipsis; }
+.r.sum .c.name, .r.sum .c.num { font-weight: 600; }
+.r.selrow { background: var(--sel); }
+.r.selrow .c.idc { background: var(--accent); color: #fff; }
+.c.act { outline: 2px solid var(--accent); outline-offset: -2px; }
+.c input.ed { width: 100%; height: 22px; border: 0; outline: 0; background: var(--surface); padding: 0 2px; font: inherit; }
+.tog { width: 14px; height: 14px; display: inline-grid; place-items: center; cursor: pointer; color: var(--muted); flex: none; border: 0; background: none; padding: 0; }
+.tog svg { width: 10px; height: 10px; fill: currentColor; stroke: none; }
+.ind { display: flex; gap: 2px; justify-content: center; }
+.ind span { width: 12px; height: 12px; border-radius: 2px; display: inline-grid; place-items: center; font-size: 9px; font-weight: 700; line-height: 1; }
+.ind .k-cons { border: 1px solid var(--accent); background: var(--accent-weak); }
+.ind .k-late { background: var(--err); color: #fff; border-radius: 50%; }
+.ind .k-note { border: 1px solid var(--line-strong); }
+.r.addrow .c.name { color: var(--muted); font-style: italic; }
+.c.tf.crit { color: var(--crit); font-weight: 600; }
+.c.late { color: var(--err); font-weight: 600; }
+
+.chart { position: relative; width: max-content; min-width: 100%; }
+.scale { position: sticky; top: 0; z-index: 3; height: 46px; background: var(--surface-2); border-bottom: 2px solid var(--line-strong); }
+.scale svg, #gantt { display: block; }
+#gantt { user-select: none; }
+#gantt .bar { cursor: grab; }
+#gantt .bar.dragging { cursor: grabbing; opacity: .7; }
+
+.panel { flex: none; width: 340px; border-left: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
+.panel[hidden] { display: none !important; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.tab { flex: 1; height: 38px; border: 0; background: none; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.tab.on { color: var(--fg); border-bottom-color: var(--accent); }
+.badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px; display: inline-grid; place-items: center; background: var(--err); color: #fff; font-family: var(--f-num); }
+.badge.warn { background: var(--warn); }
+.badge[hidden] { display: none; }
+.pbody { overflow: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 14px; min-height: 0; flex: 1; }
+.fld { display: flex; flex-direction: column; gap: 4px; }
+.fld > label, .lab { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.fld input[type=text], .fld input[type=date], .fld input[type=number], .fld select, .fld textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); padding: 6px 8px; }
+.fld textarea { min-height: 64px; resize: vertical; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row2 > * { min-width: 0; }
+.chk { display: flex; align-items: center; gap: 6px; }
+.chks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.why { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 10px 12px; background: var(--surface-2); display: flex; flex-direction: column; gap: 6px; line-height: 1.45; }
+.why.crit { border-left-color: var(--crit); }
+.why b { font-weight: 600; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--f-num); }
+table.lk { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.lk th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; padding: 4px; border-bottom: 1px solid var(--line); }
+table.lk td { padding: 3px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.lk input, table.lk select { width: 100%; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); padding: 2px 4px; }
+table.lk .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+.lnk { color: var(--accent); cursor: pointer; background: none; border: 0; padding: 0; text-align: left; }
+.lnk:hover { text-decoration: underline; }
+.empty { color: var(--muted); line-height: 1.5; }
+.iss { display: flex; flex-direction: column; gap: 6px; }
+.it { display: grid; grid-template-columns: 10px 1fr; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; background: var(--surface); text-align: left; line-height: 1.4; }
+.it:hover { border-color: var(--line-strong); }
+.it .sv { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; }
+.it.err .sv { background: var(--err); } .it.warn .sv { background: var(--warn); } .it.info .sv { background: var(--accent); }
+.it small { color: var(--muted); display: block; margin-top: 2px; }
+.sect { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.sect + .sect { border-top: 1px solid var(--line); padding-top: 14px; }
+.sect h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.status { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding-block: 5px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--surface-2); border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.status b { color: var(--fg); font-weight: 500; font-family: var(--f-num); }
+.status .pill { padding: 1px 8px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.status .pill.bad { color: var(--err); border-color: var(--err); }
+.status .pill.good { color: var(--ok); border-color: var(--ok); }
+
+.modal { position: fixed; inset: 0; z-index: 50; background: rgba(10, 14, 22, .55); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.mhead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border-radius: 8px 8px 0 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.mhead h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.mbody { flex: 1; overflow: auto; background: var(--bg); border-radius: 0 0 8px 8px; padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.mbody canvas { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.25); max-width: 100%; height: auto; }
+.pgl { font-size: 12px; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(44px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; background: var(--fg); color: var(--surface); padding: 9px 14px; border-radius: 8px; font-size: 13px; max-width: min(560px, calc(100vw - 32px)); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.drop { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(43, 85, 201, .18); border: 3px dashed var(--accent); font-size: 18px; font-weight: 600; color: var(--accent); pointer-events: none; }
+@media (max-width: 900px) {
+  .panel { position: fixed; right: 0; top: 0; bottom: 0; z-index: 40; width: min(340px, 92vw); box-shadow: -8px 0 24px rgba(0,0,0,.2); padding-top: env(safe-area-inset-top, 0px); padding-right: env(safe-area-inset-right, 0px); }
+  #gridPane { width: 55%; }
+  .ic .lbl { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>Programme Studio</div>
+    <input id="projName" type="text" aria-label="項目名稱" spellcheck="false">
+    <span class="spacer"></span>
+    <button class="btn" id="bOpen" title="開啟 MS Project XML 或 Programme Studio JSON"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>開啟</button>
+    <button class="btn" id="bSave" title="下載項目檔（.json）"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>儲存</button>
+    <button class="btn" id="bXml" title="匯出給 MS Project 開啟的 XML"><svg viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 6l-2 12"/></svg>MS Project XML</button>
+    <button class="btn" id="bPrev" title="預覽 PDF 版面"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>預覽</button>
+    <button class="btn primary" id="bPdf"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M12 10v7M9 14l3 3 3-3"/></svg>匯出 PDF</button>
+  </header>
+  <nav class="tools" aria-label="編輯工具">
+    <div class="grp">
+      <button class="ic" id="bUndo" title="還原 (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-4"/></svg></button>
+      <button class="ic" id="bRedo" title="重做 (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h4"/></svg></button>
+    </div>
+    <div class="grp">
+      <button class="ic" id="bAdd" title="新增工作 (Insert)"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="12" height="6" rx="1"/><path d="M19 8v8M15 12h8"/></svg><span class="lbl">工作</span></button>
+      <button class="ic" id="bMs" title="新增里程碑"><svg viewBox="0 0 24 24"><path d="M12 4l7 8-7 8-7-8z"/></svg><span class="lbl">里程碑</span></button>
+      <button class="ic" id="bDel" title="刪除 (Delete)"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span class="lbl">刪除</span></button>
+    </div>
+    <div class="grp">
+      <button class="ic" id="bOut" title="凸排 (Alt+Shift+←)"><svg viewBox="0 0 24 24"><path d="M11 6H21M11 12h10M11 18h10M7 9l-3 3 3 3"/></svg></button>
+      <button class="ic" id="bIn" title="縮排 (Alt+Shift+→)"><svg viewBox="0 0 24 24"><path d="M11 6H21M11 12h10M11 18h10M4 9l3 3-3 3"/></svg></button>
+      <button class="ic" id="bUp" title="上移 (Alt+Shift+↑)"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+      <button class="ic" id="bDown" title="下移 (Alt+Shift+↓)"><svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
+    </div>
+    <div class="grp">
+      <button class="ic" id="bLink" title="連結所選工作，依點選順序 FS (Ctrl+F2)"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg><span class="lbl">連結</span></button>
+      <button class="ic" id="bUnlink" title="取消連結 (Ctrl+Shift+F2)"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/><path d="M4 4l16 16"/></svg><span class="lbl">取消連結</span></button>
+    </div>
+    <div class="grp">
+      <select class="sm" id="zoom" aria-label="時間刻度">
+        <option value="fit">整個項目</option><option value="week">週</option><option value="month">月</option><option value="quarter">季</option>
+      </select>
+      <button class="ic" id="bCrit" title="標示關鍵路徑"><svg viewBox="0 0 24 24"><path d="M3 17h5l3-10 3 10h7"/></svg><span class="lbl">關鍵路徑</span></button>
+      <button class="ic" id="bGoto" title="捲動到所選工作"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+    </div>
+    <span class="spacer"></span>
+    <button class="ic" id="bPanel" title="顯示 / 隱藏側欄"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg><span class="lbl">側欄</span></button>
+  </nav>
+  <div class="work" id="work">
+    <section class="pane" id="gridPane" aria-label="工作表">
+      <div class="grid" id="grid"></div>
+    </section>
+    <div class="split" id="split" role="separator" aria-orientation="vertical" tabindex="0" title="拖動調整寬度"></div>
+    <section class="pane" id="chartPane" aria-label="甘特圖">
+      <div class="chart" id="chart"><div class="scale" id="scale"></div><svg id="gantt"></svg></div>
+    </section>
+    <aside class="panel" id="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab on" data-tab="task" role="tab">工作</button>
+        <button class="tab" data-tab="issues" role="tab">檢查 <span class="badge" id="issBadge" hidden>0</span></button>
+        <button class="tab" data-tab="pdf" role="tab">PDF</button>
+        <button class="tab" data-tab="proj" role="tab">項目</button>
+      </div>
+      <div class="pbody" id="pbody"></div>
+    </aside>
+  </div>
+  <footer class="status" id="status"></footer>
+</div>
+<div class="modal" id="modal" hidden>
+  <div class="mhead"><h2>PDF 預覽</h2><span class="pgl" id="mInfo"></span><span class="spacer"></span>
+    <button class="btn" id="mClose">關閉</button><button class="btn primary" id="mPdf">匯出 PDF</button></div>
+  <div class="mbody" id="mBody"></div>
+</div>
+<input type="file" id="fileIn" accept=".xml,.json,.mpp" hidden>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+const SAMPLE = {"name":"Example Project","title":"Example - Equipment Replacement Programme","start":"2027-01-04","status":"Draft","dateFmt":"us","workdays":[1,2,3,4,5],"holidays":[],"notes":["Example data for trying the tool. Open your own MS Project XML to replace it."],"print":{"title":"Master Programme: Example Project - Equipment Replacement"},"tasks":[{"uid":1,"name":"Contract Award","lvl":1,"dur":0,"preds":[],"cons":{"type":"SNET","date":"2027-01-04"}},{"uid":2,"name":"Commencement of the Works","lvl":1,"dur":0,"preds":[{"uid":1,"type":"FS","lag":0}]},{"uid":3,"name":"Part 1 - Submissions","lvl":1,"dur":0,"preds":[]},{"uid":4,"name":"Contractor's Master Programme","lvl":2,"dur":5,"preds":[{"uid":2,"type":"FS","lag":0}],"deadline":"2027-01-11","notes":"Within 7 days after commencement"},{"uid":5,"name":"Quality Plan","lvl":2,"dur":10,"preds":[{"uid":2,"type":"FS","lag":0}],"deadline":"2027-01-18"},{"uid":6,"name":"System Design Specification","lvl":2,"dur":20,"preds":[{"uid":2,"type":"FS","lag":0}],"deadline":"2027-03-15"},{"uid":7,"name":"Engineer's Review and Approval of Design","lvl":2,"dur":10,"preds":[{"uid":6,"type":"FS","lag":0}]},{"uid":8,"name":"Part 2 - Procurement and FAT","lvl":1,"dur":0,"preds":[]},{"uid":9,"name":"Procurement and Manufacturing","lvl":2,"dur":30,"preds":[{"uid":7,"type":"FS","lag":0}]},{"uid":10,"name":"Factory Acceptance Test","lvl":2,"dur":5,"preds":[{"uid":9,"type":"FS","lag":0}]},{"uid":11,"name":"Delivery to Site","lvl":2,"dur":10,"preds":[{"uid":10,"type":"FS","lag":0}]},{"uid":12,"name":"Part 3 - Site Works","lvl":1,"dur":0,"preds":[]},{"uid":13,"name":"Site Ready for Installation (by Employer)","lvl":2,"dur":0,"preds":[{"uid":2,"type":"FS","lag":0}],"cons":{"type":"SNET","date":"2027-03-29"}},{"uid":14,"name":"Installation - Site A","lvl":2,"dur":15,"preds":[{"uid":11,"type":"FS","lag":0},{"uid":13,"type":"FS","lag":0}]},{"uid":15,"name":"Installation - Site B","lvl":2,"dur":15,"preds":[{"uid":14,"type":"FS","lag":0}]},{"uid":16,"name":"Testing and Commissioning","lvl":2,"dur":15,"preds":[{"uid":15,"type":"FS","lag":0}]},{"uid":17,"name":"Equipment Cut-over","lvl":2,"dur":5,"preds":[{"uid":16,"type":"FS","lag":0}]},{"uid":18,"name":"Reliability Demonstration Test","lvl":2,"dur":20,"preds":[{"uid":17,"type":"FS","lag":0}]},{"uid":19,"name":"O&M Manual and As-built Drawings","lvl":2,"dur":15,"preds":[{"uid":17,"type":"FS","lag":5}]},{"uid":20,"name":"Completion of the Works","lvl":1,"dur":0,"preds":[{"uid":18,"type":"FS","lag":0},{"uid":19,"type":"FS","lag":0}],"deadline":"2027-10-11"}]};
+// ============================================================ utilities
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const DAY = 864e5;
+const WDN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const pad = n => String(n).padStart(2, '0');
+const dn = s => Math.floor(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / DAY);
+const isoOf = n => new Date(n * DAY).toISOString().slice(0, 10);
+const ymd = n => { const d = new Date(n * DAY); return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()]; };
+const dowOf = n => new Date(n * DAY).getUTCDay();
+const todayDn = () => { const d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY); };
+function fmtD(n, withDow = true) {
+  if (n == null) return '';
+  const [y, m, d] = ymd(n), yy = pad(y % 100);
+  const core = P.dateFmt === 'us' ? `${m}/${d}/${yy}` : `${pad(d)}/${pad(m)}/${yy}`;
+  return withDow ? `${WDN[dowOf(n)]} ${core}` : core;
+}
+const fmtShort = n => { const [, m, d] = ymd(n); return P.dateFmt === 'us' ? `${m}/${d}` : `${d}/${m}`; };
+function parseDate(s) {
+  s = String(s || '').trim().replace(/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s*/i, '');
+  if (!s) return null;
+  let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return dn(`${m[1]}-${pad(m[2])}-${pad(m[3])}`);
+  if ((m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/))) {
+    let a = +m[1], b = +m[2], y = +m[3]; if (y < 100) y += 2000;
+    const [mo, d] = P.dateFmt === 'us' ? [a, b] : [b, a];
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    return dn(`${y}-${pad(mo)}-${pad(d)}`);
+  }
+  if ((m = s.match(/^(\d{1,2})\s+([a-z]{3})[a-z]*\.?\s+(\d{2,4})$/i)) || (m = s.match(/^([a-z]{3})[a-z]*\.?\s+(\d{1,2}),?\s+(\d{2,4})$/i))) {
+    let d, mo, y; if (/^\d/.test(m[1])) { d = +m[1]; mo = MON.findIndex(x => x.toLowerCase() === m[2].toLowerCase()); } else { mo = MON.findIndex(x => x.toLowerCase() === m[1].toLowerCase()); d = +m[2]; }
+    y = +m[3]; if (y < 100) y += 2000; if (mo < 0) return null;
+    return dn(`${y}-${pad(mo + 1)}-${pad(d)}`);
+  }
+  return null;
+}
+function parseDur(s) {
+  s = String(s ?? '').trim().toLowerCase(); if (s === '') return null;
+  const m = s.match(/^(-?\d+(?:\.\d+)?)\s*(d|day|days|w|wk|wks|week|weeks|mo|mon|month|months|天|日|週|周|月)?\??$/);
+  if (!m) return null;
+  let v = +m[1]; const u = m[2] || 'd';
+  if (/^(w|wk|wks|week|weeks|週|周)$/.test(u)) v *= 5; else if (/^(mo|mon|month|months|月)$/.test(u)) v *= 20;
+  return Math.max(0, Math.round(v));
+}
+const fmtDur = d => d === 1 ? '1 day' : `${d} days`;
+const TYPES = ['FS', 'SS', 'FF', 'SF'];
+const CONS = { ASAP: 'As Soon As Possible', SNET: 'Start No Earlier Than', FNET: 'Finish No Earlier Than', MSO: 'Must Start On', MFO: 'Must Finish On', SNLT: 'Start No Later Than', FNLT: 'Finish No Later Than' };
+
+// ============================================================ state
+let P = null;           // project (persisted)
+let S = null;           // schedule result
+const UI = { sel: [], act: null, col: 'name', collapsed: new Set(), crit: false, zoom: 'fit', tab: 'task', panel: true, editing: null };
+let undoStack = [], redoStack = [];
+let uidSeq = 1;
+function defaults(p) {
+  p.name ??= 'New Project'; p.title ??= ''; p.start ??= isoOf(todayDn()); p.status ??= ''; p.dateFmt ??= 'us';
+  p.workdays ??= [1, 2, 3, 4, 5]; p.holidays ??= []; p.notes ??= []; p.tasks ??= [];
+  p.print = Object.assign({ paper: 'A3', orient: 'landscape', title: '', cols: { id: true, ind: true, name: true, dur: true, start: true, finish: true, pred: false, dl: false },
+    tableFrac: 0.47, rowH: 'auto', font: 7.6, links: true, deadlines: true, crit: false, labels: true, printDate: '' }, p.print || {});
+  p.print.cols = Object.assign({ id: true, ind: true, name: true, dur: true, start: true, finish: true, pred: false, dl: false }, p.print.cols);
+  for (const t of p.tasks) { t.preds ??= []; t.lvl = Math.max(1, t.lvl | 0 || 1); t.dur = Math.max(0, Math.round(+t.dur || 0)); }
+  uidSeq = Math.max(0, ...p.tasks.map(t => t.uid | 0)) + 1;
+  for (const t of p.tasks) if (!t.uid) t.uid = uidSeq++;
+  return p;
+}
+function snapshot() { return JSON.stringify(P); }
+function mutate(fn, msg) {
+  undoStack.push(snapshot()); if (undoStack.length > 150) undoStack.shift(); redoStack = [];
+  fn(); normalizeLevels(); recalc(); if (msg) toast(msg);
+}
+function undo() { if (!undoStack.length) return toast('沒有可以還原的動作'); redoStack.push(snapshot()); P = JSON.parse(undoStack.pop()); recalc(); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); P = JSON.parse(redoStack.pop()); recalc(); }
+function normalizeLevels() { let prev = 0; for (const t of P.tasks) { t.lvl = Math.max(1, Math.min(t.lvl, prev + 1)); prev = t.lvl; } }
+let saveTimer = null;
+function autosave() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem('programme-studio.v1', snapshot()); } catch (e) { } }, 400); }
+
+// ============================================================ calendar
+let CAL = null;
+function buildCal() {
+  const ws = new Set(P.workdays.length ? P.workdays : [1, 2, 3, 4, 5]);
+  const hol = new Set(P.holidays.map(h => h.date).filter(Boolean).map(dn));
+  const base = dn(P.start) - 1500, span = 7000;
+  const work = [], next = new Int32Array(span + 2);
+  for (let k = 0; k <= span; k++) { const d = base + k; if (ws.has(dowOf(d)) && !hol.has(d)) work.push(d); }
+  let wi = work.length;
+  for (let k = span; k >= 0; k--) { const d = base + k; while (wi > 0 && work[wi - 1] >= d) wi--; next[k] = wi; }
+  CAL = { base, span, work, next, ws, hol,
+    idx(d) { const k = Math.min(Math.max(d - base, 0), span); return next[k]; },
+    at(i) { return work[Math.min(Math.max(i, 0), work.length - 1)]; },
+    isWork(d) { return ws.has(dowOf(d)) && !hol.has(d); } };
+}
+
+// ============================================================ scheduler (MS Project compatible, working-day boundaries)
+function schedule() {
+  buildCal();
+  const T = P.tasks, n = T.length, iss = [];
+  const R = T.map((t, i) => ({ t, i, id: i + 1, sum: i + 1 < n && T[i + 1].lvl > t.lvl, kids: [], parent: null }));
+  const byUid = new Map(R.map(r => [r.t.uid, r]));
+  const stack = [];
+  for (const r of R) { while (stack.length && stack[stack.length - 1].t.lvl >= r.t.lvl) stack.pop(); r.parent = stack[stack.length - 1] || null; if (r.parent) r.parent.kids.push(r); stack.push(r); }
+  const leavesOf = r => r.sum ? r.kids.flatMap(leavesOf) : [r];
+  const leaves = R.filter(r => !r.sum);
+  // effective incoming links on leaves
+  for (const r of leaves) r.inn = [];
+  for (const r of R) r.out = [];
+  for (const r of R) {
+    for (const p of r.t.preds) {
+      const pr = byUid.get(p.uid);
+      if (!pr) { iss.push({ sev: 'warn', uid: r.t.uid, msg: `前置工作已不存在（UID ${p.uid}）`, hint: '在「工作」側欄移除這條連結。' }); continue; }
+      if (pr === r) continue;
+      if (pr.sum || r.sum) iss.push({ sev: 'info', uid: r.t.uid, msg: `摘要工作上的連結：${pr.id} → ${r.id}`, hint: '系統會套用到其下所有子工作。MS Project 也允許，但建議直接連到子工作。' });
+      const froms = pr.sum ? leavesOf(pr) : [pr], tos = r.sum ? leavesOf(r) : [r];
+      for (const a of froms) for (const b of tos) if (a !== b) { b.inn.push({ from: a, type: p.type || 'FS', lag: +p.lag || 0, orig: pr }); a.out.push(b); }
+    }
+  }
+  // topological order (Kahn)
+  const indeg = new Map(leaves.map(r => [r, r.inn.length])), q = leaves.filter(r => !r.inn.length), order = [];
+  while (q.length) { const r = q.shift(); order.push(r); for (const s of r.out) { indeg.set(s, indeg.get(s) - 1); if (indeg.get(s) === 0) q.push(s); } }
+  if (order.length < leaves.length) {
+    const cyc = leaves.filter(r => !order.includes(r));
+    iss.push({ sev: 'err', uid: cyc[0].t.uid, msg: `循環連結：${cyc.map(r => r.id).join(', ')}`, hint: '這些工作互相依賴，無法排程。請移除其中一條連結。' });
+    for (const r of cyc) { r.cyc = true; order.push(r); }
+  }
+  const s0 = CAL.idx(dn(P.start)), done = new Set();
+  for (const r of order) {
+    const t = r.t, dur = t.dur;
+    let es = s0, drv = { k: 'start' };
+    for (const l of r.inn) {
+      if (!done.has(l.from)) continue;
+      const f = l.from; let req;
+      if (l.type === 'FS') req = f.ef + l.lag; else if (l.type === 'SS') req = f.es + l.lag;
+      else if (l.type === 'FF') req = f.ef + l.lag - dur; else req = f.es + l.lag - dur;
+      if (req > es || (req === es && drv.k === 'start')) { es = req; drv = { k: 'pred', l }; }
+    }
+    const logicEs = es; const c = t.cons;
+    if (c && c.type !== 'ASAP' && c.date) {
+      const ci = CAL.idx(dn(c.date));
+      if (c.type === 'SNET' && ci >= es) { if (ci > es || drv.k === 'start') drv = { k: 'cons' }; es = Math.max(es, ci); }
+      else if (c.type === 'FNET' && ci + 1 - dur >= es) { if (ci + 1 - dur > es || drv.k === 'start') drv = { k: 'cons' }; es = Math.max(es, ci + 1 - dur); }
+      else if (c.type === 'MSO' || c.type === 'MFO') {
+        const want = c.type === 'MSO' ? ci : ci + 1 - dur;
+        if (logicEs > want) iss.push({ sev: 'warn', uid: t.uid, msg: `${r.id} ${t.name}：${CONS[c.type]} 與前置邏輯衝突`, hint: `邏輯上最早可於 ${fmtD(CAL.at(logicEs))} 開始，但約束強制 ${fmtD(CAL.at(want))}。` });
+        es = want; drv = { k: 'cons', conflict: logicEs > want };
+      }
+    }
+    r.es = es; r.ef = es + dur; r.drv = drv; r.logicEs = logicEs;
+    r.eod = dur === 0 && drv.k === 'pred' && (drv.l.type === 'FS' || drv.l.type === 'FF') && drv.l.lag === 0 && (drv.l.from.t.dur > 0 || drv.l.from.eod) && drv.l.from.ef === es;
+    done.add(r);
+  }
+  for (const r of leaves) {
+    r.start = CAL.at(r.es);
+    r.finish = r.t.dur > 0 ? CAL.at(r.ef - 1) : (r.eod ? CAL.at(r.es - 1) : CAL.at(r.es));
+    if (r.t.dur === 0) r.start = r.finish;
+  }
+  const sumUp = r => { if (!r.sum) return; r.kids.forEach(sumUp); const L = leavesOf(r); r.es = Math.min(...L.map(x => x.es)); r.ef = Math.max(...L.map(x => x.ef)); r.start = Math.min(...L.map(x => x.start)); r.finish = Math.max(...L.map(x => x.finish)); r.dur = r.ef - r.es; };
+  R.filter(r => !r.parent).forEach(sumUp);
+  for (const r of leaves) r.dur = r.t.dur;
+  // backward pass for total float
+  const pEf = leaves.length ? Math.max(...leaves.map(r => r.ef)) : s0;
+  for (const r of leaves) { r.lf = pEf; }
+  for (let k = order.length - 1; k >= 0; k--) {
+    const r = order[k];
+    for (const s of r.out) for (const l of s.inn) if (l.from === r) {
+      const sLs = s.lf - s.t.dur; let lf;
+      if (l.type === 'FS') lf = sLs - l.lag; else if (l.type === 'SS') lf = sLs - l.lag + r.t.dur;
+      else if (l.type === 'FF') lf = s.lf - l.lag; else lf = s.lf - l.lag + r.t.dur;
+      r.lf = Math.min(r.lf, lf);
+    }
+  }
+  for (const r of leaves) { r.ls = r.lf - r.t.dur; r.tf = r.ls - r.es; r.crit = r.tf <= 0 && !r.cyc; }
+  for (const r of R.filter(x => x.sum)) { const L = leavesOf(r); r.tf = Math.min(...L.map(x => x.tf)); r.crit = L.some(x => x.crit); }
+  // checks
+  for (const r of R) {
+    const t = r.t;
+    if (t.deadline) { const dl = dn(t.deadline); if (r.finish > dl) iss.push({ sev: 'err', uid: t.uid, msg: `${r.id} ${t.name}：比期限遲 ${r.finish - dl} 天`, hint: `完成 ${fmtD(r.finish)}，期限 ${fmtD(dl)}。` }); }
+    if (!r.sum && t.cons && t.cons.date) {
+      const ci = dn(t.cons.date);
+      if (t.cons.type === 'SNLT' && r.start > ci) iss.push({ sev: 'err', uid: t.uid, msg: `${r.id} ${t.name}：開始遲於 Start No Later Than`, hint: `開始 ${fmtD(r.start)}，約束 ${fmtD(ci)}。` });
+      if (t.cons.type === 'FNLT' && r.finish > ci) iss.push({ sev: 'err', uid: t.uid, msg: `${r.id} ${t.name}：完成遲於 Finish No Later Than`, hint: `完成 ${fmtD(r.finish)}，約束 ${fmtD(ci)}。` });
+    }
+    if (!r.sum && r.drv && r.drv.k === 'start' && r.i > 0 && !(t.cons && t.cons.type !== 'ASAP')) iss.push({ sev: 'info', uid: t.uid, msg: `${r.id} ${t.name}：沒有前置工作`, hint: '工作會在項目開始日開始。是否漏了連結？' });
+    if (!r.sum && r.out && !r.out.length && r.ef < pEf && !t.deadline) iss.push({ sev: 'info', uid: t.uid, msg: `${r.id} ${t.name}：沒有後續工作`, hint: '這項工作延誤不會影響其他工作。如果它其實會影響完工，請補上連結。' });
+    if (/[^\x00-\x7F–—‘’“”]/.test(t.name)) iss.push({ sev: 'warn', uid: t.uid, msg: `${r.id}：名稱含中文或特殊字元`, hint: 'PDF 使用標準 Helvetica 字型，中文會變成亂碼。請用英文名稱。' });
+  }
+  const sev = { err: 0, warn: 1, info: 2 }; iss.sort((a, b) => sev[a.sev] - sev[b.sev]);
+  S = { R, byUid, leaves, iss, start: R.length ? Math.min(...R.map(r => r.start)) : dn(P.start), finish: R.length ? Math.max(...R.map(r => r.finish)) : dn(P.start), pEf, s0 };
+}
+const predStr = t => t.preds.map(p => { const r = S.byUid.get(p.uid); if (!r) return '?'; const lag = +p.lag || 0; return `${r.id}${p.type !== 'FS' || lag ? p.type : ''}${lag ? (lag > 0 ? '+' : '') + lag + 'd' : ''}`; }).join(',');
+function parsePreds(s) {
+  const out = []; s = String(s || '').trim(); if (!s) return out;
+  for (const part of s.split(/[,;，]/)) {
+    const m = part.trim().match(/^(\d+)\s*(FS|SS|FF|SF)?\s*(?:([+-])\s*(\d+(?:\.\d+)?)\s*(d|days?|w|wks?|weeks?|mo|months?|天|日|週)?)?$/i);
+    if (!m) throw new Error(`看不懂「${part.trim()}」，格式例如 5、5SS、7FS+3d、3FF-2d`);
+    const r = S.R[+m[1] - 1]; if (!r) throw new Error(`沒有 ID ${m[1]} 這項工作`);
+    let lag = m[4] ? +m[4] : 0; const u = (m[5] || 'd').toLowerCase();
+    if (/^(w|wk|wks|week|weeks|週)$/.test(u)) lag *= 5; else if (/^(mo|month|months)$/.test(u)) lag *= 20;
+    if (m[3] === '-') lag = -lag;
+    out.push({ uid: r.t.uid, type: (m[2] || 'FS').toUpperCase(), lag: Math.round(lag) });
+  }
+  return out;
+}
+
+// ============================================================ grid
+const COLS = [
+  { k: 'id', h: 'ID', w: 44 }, { k: 'ind', h: '', w: 34 }, { k: 'name', h: 'Task Name', w: 300, ed: true },
+  { k: 'dur', h: 'Duration', w: 74, ed: true }, { k: 'start', h: 'Start', w: 100, ed: true }, { k: 'finish', h: 'Finish', w: 100, ed: true },
+  { k: 'pred', h: 'Predecessors', w: 110, ed: true }, { k: 'dl', h: 'Deadline', w: 100, ed: true }, { k: 'tf', h: 'Total Float', w: 78 },
+];
+const EDCOLS = COLS.filter(c => c.ed).map(c => c.k);
+let VIS = [];   // visible rows (schedule rows)
+function visibleRows() {
+  const out = []; let hideBelow = Infinity;
+  for (const r of S.R) { if (r.t.lvl > hideBelow) continue; hideBelow = Infinity; out.push(r); if (r.sum && UI.collapsed.has(r.t.uid)) hideBelow = r.t.lvl; }
+  return out;
+}
+const SVG_DOWN = '<svg viewBox="0 0 10 10"><path d="M1 3h8L5 8z"/></svg>', SVG_RIGHT = '<svg viewBox="0 0 10 10"><path d="M3 1v8l5-4z"/></svg>';
+function cellText(r, k) {
+  const t = r.t;
+  switch (k) {
+    case 'id': return r.id;
+    case 'dur': return fmtDur(r.sum ? r.dur : t.dur);
+    case 'start': return fmtD(r.start);
+    case 'finish': return fmtD(r.finish);
+    case 'pred': return predStr(t);
+    case 'dl': return t.deadline ? fmtD(dn(t.deadline)) : '';
+    case 'tf': return r.tf == null ? '' : `${r.tf}d`;
+    default: return t.name;
+  }
+}
+function renderGrid() {
+  const cols = COLS.map(c => c.w + 'px').join(' ');
+  const g = $('#grid'); g.style.setProperty('--cols', cols);
+  const head = `<div class="ghead"><div class="r">${COLS.map(c => `<div class="c${c.k === 'id' ? ' idc' : ''}">${esc(c.h)}</div>`).join('')}</div></div>`;
+  const selSet = new Set(UI.sel);
+  const rows = VIS.map((r, vi) => {
+    const t = r.t, late = t.deadline && r.finish > dn(t.deadline);
+    const cls = ['r', r.sum ? 'sum' : '', selSet.has(t.uid) ? 'selrow' : ''].join(' ');
+    const cells = COLS.map(c => {
+      const act = UI.act === t.uid && UI.col === c.k ? ' act' : '';
+      if (c.k === 'id') return `<div class="c idc" data-k="id">${r.id}</div>`;
+      if (c.k === 'ind') {
+        const b = [];
+        if (t.cons && t.cons.type && t.cons.type !== 'ASAP') b.push(`<span class="k-cons" title="${esc(CONS[t.cons.type])} ${esc(fmtD(dn(t.cons.date)))}"></span>`);
+        if (late) b.push('<span class="k-late" title="遲於期限">!</span>');
+        else if (t.notes) b.push(`<span class="k-note" title="${esc(t.notes)}"></span>`);
+        return `<div class="c ind" data-k="ind">${b.join('')}</div>`;
+      }
+      if (c.k === 'name') {
+        const indent = (t.lvl - 1) * 16;
+        const tg = r.sum ? `<button class="tog" data-tog="${t.uid}" aria-label="展開或收合">${UI.collapsed.has(t.uid) ? SVG_RIGHT : SVG_DOWN}</button>` : '<span style="width:14px;flex:none"></span>';
+        return `<div class="c name${act}" data-k="name" style="padding-left:${6 + indent}px">${tg}<span class="tx">${esc(t.name)}</span></div>`;
+      }
+      const extra = (c.k === 'tf' && r.crit ? ' crit' : '') + (c.k === 'finish' && late ? ' late' : '');
+      return `<div class="c num ${c.k}${act}${extra}" data-k="${c.k}">${esc(cellText(r, c.k))}</div>`;
+    }).join('');
+    return `<div class="${cls}" data-vi="${vi}" data-uid="${t.uid}">${cells}</div>`;
+  }).join('');
+  const add = `<div class="r addrow" data-add="1">${COLS.map(c => `<div class="c${c.k === 'id' ? ' idc' : ''}${c.k === 'name' ? ' name' : ''}">${c.k === 'name' ? '<span style="width:14px"></span>按這裏或按 Insert 新增工作' : ''}</div>`).join('')}</div>`;
+  g.innerHTML = head + rows + add + '<div style="height:40px"></div>';
+}
+
+// ============================================================ timescale
+function unitStart(unit, d) {
+  const [y, m] = ymd(d);
+  if (unit === 'year') return dn(`${y}-01-01`);
+  if (unit === 'quarter') return dn(`${y}-${pad(Math.floor((m - 1) / 3) * 3 + 1)}-01`);
+  if (unit === 'month') return dn(`${y}-${pad(m)}-01`);
+  return d - ((dowOf(d) + 6) % 7);     // week (Mon)
+}
+function unitNext(unit, d) {
+  const [y, m] = ymd(d);
+  if (unit === 'year') return dn(`${y + 1}-01-01`);
+  if (unit === 'quarter') { const nm = m + 3; return nm > 12 ? dn(`${y + 1}-${pad(nm - 12)}-01`) : dn(`${y}-${pad(nm)}-01`); }
+  if (unit === 'month') return m === 12 ? dn(`${y + 1}-01-01`) : dn(`${y}-${pad(m + 1)}-01`);
+  return d + 7;
+}
+function unitLabels(unit, a, top) {
+  const [y, m, d] = ymd(a);
+  if (unit === 'year') return [String(y), `'${pad(y % 100)}`];
+  if (unit === 'quarter') { const q = Math.floor((m - 1) / 3) + 1; return top ? [`${['1st', '2nd', '3rd', '4th'][q - 1]} Quarter ${y}`, `${['1st', '2nd', '3rd', '4th'][q - 1]} Quarter`, `Q${q} ${y}`, `Q${q}`] : [`Q${q}`, `${q}`]; }
+  if (unit === 'month') return top ? [`${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m - 1]} ${y}`, `${MON[m - 1]} ${y}`, `${MON[m - 1]} '${pad(y % 100)}`, MON[m - 1]] : [MON[m - 1], MON[m - 1][0]];
+  return [String(d), ''];
+}
+function segments(unit, r0, r1) {
+  const out = []; let a = unitStart(unit, r0);
+  while (a < r1) { const b = unitNext(unit, a); out.push({ a: Math.max(a, r0), b: Math.min(b, r1), a0: a }); a = b; }
+  return out;
+}
+const TIERS = { week: ['month', 'week'], month: ['quarter', 'month'], quarter: ['year', 'quarter'] };
+function autoTier(r0, r1) { const months = (r1 - r0) / 30.4; return months <= 5 ? 'week' : months <= 40 ? 'month' : 'quarter'; }
+function chartRange() {
+  let lo = S.start, hi = S.finish;
+  for (const r of S.R) if (r.t.deadline) hi = Math.max(hi, dn(r.t.deadline));
+  return [unitStart('month', lo - 10), unitNext('month', hi + 10)];
+}
+
+// ============================================================ Gantt (screen)
+let GX = { r0: 0, r1: 0, ppd: 4 };
+const RH = 26;
+function renderGantt() {
+  const [r0, r1] = chartRange();
+  const paneW = $('#chartPane').clientWidth - 2;
+  let mode = UI.zoom, ppd;
+  if (mode === 'fit') { ppd = Math.max(0.4, paneW / (r1 - r0)); mode = autoTier(r0, r1); }
+  else ppd = { week: 22, month: 5, quarter: 1.6 }[mode];
+  GX = { r0, r1, ppd, mode };
+  const W = Math.ceil((r1 - r0) * ppd), H = VIS.length * RH + 40;
+  const X = d => (d - r0) * ppd;
+  const cs = getComputedStyle(document.documentElement), col = k => cs.getPropertyValue(k).trim();
+  // scale
+  const [tu, bu] = TIERS[mode];
+  const ctx = document.createElement('canvas').getContext('2d'); ctx.font = '12px "IBM Plex Sans", sans-serif';
+  const fit = (labels, w) => labels.find(l => ctx.measureText(l).width + 8 <= w) ?? '';
+  let sc = `<svg width="${W}" height="46" font-family="IBM Plex Sans, sans-serif" font-size="12">`;
+  for (const s of segments(tu, r0, r1)) { const x = X(s.a), w = X(s.b) - x; sc += `<line x1="${X(s.b)}" y1="0" x2="${X(s.b)}" y2="23" stroke="${col('--line-strong')}"/><text x="${x + 5}" y="16" fill="${col('--fg')}">${esc(fit(unitLabels(tu, s.a0, true), w))}</text>`; }
+  sc += `<line x1="0" y1="23" x2="${W}" y2="23" stroke="${col('--line')}"/>`;
+  for (const s of segments(bu, r0, r1)) { const x = X(s.a), w = X(s.b) - x; const lab = fit(unitLabels(bu, s.a0, false), w); sc += `<line x1="${X(s.b)}" y1="23" x2="${X(s.b)}" y2="46" stroke="${col('--line')}"/><text x="${x + w / 2}" y="39" text-anchor="middle" fill="${col('--muted')}">${esc(lab)}</text>`; }
+  $('#scale').innerHTML = sc + '</svg>';
+  // body
+  let g = '';
+  if (ppd >= 8) for (let d = r0; d < r1; d++) if (!CAL.isWork(d)) g += `<rect x="${X(d)}" y="0" width="${ppd}" height="${H}" fill="${col('--weekend')}"/>`;
+  const selSet = new Set(UI.sel);
+  VIS.forEach((r, vi) => { if (selSet.has(r.t.uid)) g += `<rect x="0" y="${vi * RH}" width="${W}" height="${RH}" fill="${col('--sel')}"/>`; });
+  for (const s of segments(bu, r0, r1)) g += `<line x1="${X(s.a)}" y1="0" x2="${X(s.a)}" y2="${H}" stroke="${col('--line')}" stroke-width=".6"/>`;
+  for (const s of segments(tu, r0, r1)) g += `<line x1="${X(s.a)}" y1="0" x2="${X(s.a)}" y2="${H}" stroke="${col('--line-strong')}" stroke-dasharray="2 3"/>`;
+  const td = todayDn(); if (td > r0 && td < r1) g += `<line x1="${X(td)}" y1="0" x2="${X(td)}" y2="${H}" stroke="${col('--accent')}" stroke-width="1" opacity=".5"/>`;
+  const pos = new Map();
+  const crit = UI.crit;
+  VIS.forEach((r, vi) => {
+    const y = vi * RH, ym = y + RH / 2, t = r.t;
+    if (r.sum) {
+      const x1 = X(r.start), x2 = X(r.finish + 1);
+      g += `<g fill="${col('--sum')}"><rect x="${x1}" y="${ym - 3}" width="${Math.max(2, x2 - x1)}" height="5"/><path d="M${x1 - 4} ${ym - 3}h8l-4 7z M${x2 - 4} ${ym - 3}h8l-4 7z"/></g>`;
+      pos.set(t.uid, { y: ym, x1, x2 });
+    } else if (t.dur === 0) {
+      const x = X(r.finish + (r.eod ? 1 : 0));
+      g += `<g class="bar" data-uid="${t.uid}"><path d="M${x} ${ym - 7}l7 7-7 7-7-7z" fill="${crit && r.crit ? col('--crit') : col('--sum')}"/><text x="${x + 10}" y="${ym + 4}" font-size="11" font-weight="600" fill="${col('--fg')}" font-family="IBM Plex Mono, monospace">${esc(fmtShort(r.finish))}</text></g>`;
+      pos.set(t.uid, { y: ym, x1: x, x2: x, ms: true });
+    } else {
+      const x1 = X(r.start), x2 = X(r.finish + 1), c = crit && r.crit;
+      g += `<g class="bar" data-uid="${t.uid}"><rect x="${x1}" y="${ym - 6}" width="${Math.max(3, x2 - x1)}" height="12" rx="2.5" fill="${c ? col('--crit') : col('--bar')}" stroke="${c ? col('--crit-edge') : col('--bar-edge')}" stroke-width=".8"/><rect class="rz" x="${x2 - 5}" y="${ym - 6}" width="7" height="12" fill="transparent" style="cursor:ew-resize"/></g>`;
+      pos.set(t.uid, { y: ym, x1, x2 });
+    }
+    if (t.deadline) { const x = X(dn(t.deadline) + 1); g += `<path d="M${x} ${ym - 9}v6M${x - 3.5} ${ym - 4}h7l-3.5 5z" stroke="${col('--dl')}" fill="${col('--dl')}" stroke-width="1.2"/>`; }
+  });
+  // links
+  let lk = '';
+  VIS.forEach(r => {
+    for (const p of r.t.preds) {
+      const a = pos.get(p.uid), b = pos.get(r.t.uid); if (!a || !b) continue;
+      const pr = S.byUid.get(p.uid); if (pr && r.start - pr.finish > 30) continue;
+      lk += linkPath(a, b, p.type || 'FS', RH);
+    }
+  });
+  g += `<g fill="none" stroke="${col('--link')}" stroke-width="1">${lk}</g>`;
+  const svg = $('#gantt'); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.innerHTML = `<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L8 4 0 8z" fill="${col('--link')}"/></marker></defs>` + g;
+  $('#chart').style.width = W + 'px';
+}
+function linkPath(a, b, type, rh) {
+  const sx = (type === 'SS' || type === 'SF') ? a.x1 : a.x2, tx = (type === 'FS' || type === 'SS') ? b.x1 : b.x2;
+  const down = b.y > a.y, bh = b.ms ? 7 : 6;
+  if ((type === 'FS' || type === 'SS') && tx >= sx + 4) {
+    const ty = down ? b.y - bh : b.y + bh, x = Math.max(tx + 2, sx + 4);
+    return `<path d="M${sx} ${a.y}H${x}V${ty}" marker-end="url(#ah)"/>`;
+  }
+  const mid = down ? b.y - rh / 2 : b.y + rh / 2, ex = (type === 'FS' || type === 'SS') ? tx - 8 : tx + 8;
+  return `<path d="M${sx} ${a.y}h${type === 'SS' || type === 'SF' ? -8 : 8}V${mid}H${ex}V${b.y}H${tx + ((type === 'FS' || type === 'SS') ? -1 : 1)}" marker-end="url(#ah)"/>`;
+}
+
+// ============================================================ panels
+function selRow() { return UI.act != null ? S.byUid.get(UI.act) : null; }
+function renderPanel() {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
+  const nErr = S.iss.filter(i => i.sev === 'err').length, nWarn = S.iss.filter(i => i.sev === 'warn').length;
+  const bd = $('#issBadge'); bd.hidden = !(nErr + nWarn); bd.textContent = nErr || nWarn; bd.classList.toggle('warn', !nErr);
+  const b = $('#pbody');
+  if (UI.tab === 'task') b.innerHTML = taskPanel();
+  else if (UI.tab === 'issues') b.innerHTML = issuesPanel();
+  else if (UI.tab === 'pdf') b.innerHTML = pdfPanel();
+  else b.innerHTML = projPanel();
+}
+function whyText(r) {
+  const t = r.t;
+  if (r.sum) return `摘要工作，日期由子工作決定：最早 ${fmtD(r.start)}，最遲 ${fmtD(r.finish)}。`;
+  if (r.cyc) return '<b>這項工作在循環連結之中</b>，日期無法正確計算。';
+  const d = r.drv;
+  if (d.k === 'pred') {
+    const f = d.l.from, lag = d.l.lag ? `${d.l.lag > 0 ? '+' : ''}${d.l.lag} 工作天` : '';
+    const what = { FS: `在 <b>${f.id} ${esc(f.t.name)}</b> 完成（${fmtD(f.finish)}）之後開始`, SS: `與 <b>${f.id} ${esc(f.t.name)}</b> 同時開始（${fmtD(f.start)}）`, FF: `與 <b>${f.id} ${esc(f.t.name)}</b> 同時完成（${fmtD(f.finish)}）`, SF: `在 <b>${f.id} ${esc(f.t.name)}</b> 開始時完成` }[d.l.type];
+    return `開始日由前置工作決定：${what}${lag ? `，再加 ${lag}` : ''}${d.l.orig.sum ? `（經由摘要 ${d.l.orig.id}）` : ''}。`;
+  }
+  if (d.k === 'cons') { const c = t.cons; return `開始日由約束決定：<b>${CONS[c.type]} ${fmtD(dn(c.date))}</b>。${d.conflict ? '<br><b>注意：</b>約束比前置邏輯早，存在衝突。' : r.logicEs < r.es ? `<br>沒有這個約束的話，最早可於 ${fmtD(CAL.at(r.logicEs))} 開始。` : ''}`; }
+  return `沒有前置工作或約束，所以在項目開始日（${fmtD(dn(P.start))}）開始。`;
+}
+function taskPanel() {
+  const r = selRow();
+  if (!r) return `<p class="empty">在左邊選一項工作，這裏會顯示它的資料、前後連結，以及「為什麼是這個日期」。</p>
+    <div class="sect"><h3>快速操作</h3><div class="empty">雙擊儲存格即可編輯。在 Start 欄輸入日期，會自動加上「Start No Earlier Than」約束，和 MS Project 一樣。Predecessors 欄可以直接輸入，例如 <code>5</code>、<code>7SS+3d</code>、<code>12FF-2d</code>。</div></div>`;
+  const t = r.t, c = t.cons || { type: 'ASAP', date: '' };
+  const succ = S.R.filter(x => x.t.preds.some(p => p.uid === t.uid));
+  const preds = t.preds.map((p, k) => { const pr = S.byUid.get(p.uid); return `<tr><td><input type="text" data-pk="${k}" data-pf="id" value="${pr ? pr.id : ''}" style="width:44px" aria-label="前置 ID"></td><td class="nm">${pr ? `<button class="lnk" data-go="${pr.t.uid}">${esc(pr.t.name)}</button>` : '—'}</td><td><select data-pk="${k}" data-pf="type" aria-label="類型">${TYPES.map(x => `<option${x === p.type ? ' selected' : ''}>${x}</option>`).join('')}</select></td><td><input type="number" data-pk="${k}" data-pf="lag" value="${+p.lag || 0}" style="width:56px" aria-label="Lag（工作天）"></td><td><button class="ic" data-prm="${k}" title="移除連結"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>`; }).join('');
+  return `
+  <div class="fld"><label for="fName">${r.id} · 名稱</label><input id="fName" type="text" value="${esc(t.name)}"></div>
+  <div class="row2">
+    <div class="fld"><label for="fDur">工期</label><input id="fDur" type="text" value="${r.sum ? fmtDur(r.dur) : fmtDur(t.dur)}" ${r.sum ? 'disabled' : ''}></div>
+    <div class="fld"><label for="fDl">期限 (Deadline)</label><input id="fDl" type="date" value="${t.deadline || ''}"></div>
+  </div>
+  <div class="row2">
+    <div class="fld"><label for="fCt">約束</label><select id="fCt" ${r.sum ? 'disabled' : ''}>${Object.keys(CONS).map(k => `<option value="${k}"${k === (c.type || 'ASAP') ? ' selected' : ''}>${CONS[k]}</option>`).join('')}</select></div>
+    <div class="fld"><label for="fCd">約束日期</label><input id="fCd" type="date" value="${c.date || ''}" ${c.type === 'ASAP' || r.sum ? 'disabled' : ''}></div>
+  </div>
+  <div class="why${r.crit ? ' crit' : ''}"><span class="lab">為什麼是這個日期</span><div>${whyText(r)}</div>
+    <dl class="kv"><dt>開始</dt><dd>${fmtD(r.start)}</dd><dt>完成</dt><dd>${fmtD(r.finish)}</dd>
+    ${r.sum ? '' : `<dt>最遲開始</dt><dd>${fmtD(CAL.at(r.ls))}</dd><dt>總浮時</dt><dd>${r.tf} 工作天${r.crit ? '（關鍵）' : ''}</dd>`}
+    ${t.deadline ? `<dt>距期限</dt><dd>${dn(t.deadline) - r.finish} 天</dd>` : ''}</dl></div>
+  <div class="sect"><h3>前置工作</h3>
+    ${t.preds.length ? `<table class="lk"><thead><tr><th>ID</th><th>名稱</th><th>類型</th><th>Lag</th><th></th></tr></thead><tbody>${preds}</tbody></table>` : '<p class="empty" style="margin:0">沒有前置工作。</p>'}
+    <div><button class="btn" id="pAdd">新增前置工作</button></div></div>
+  <div class="sect"><h3>後續工作</h3>${succ.length ? succ.map(s => `<button class="lnk" data-go="${s.t.uid}">${s.id} ${esc(s.t.name)}</button>`).join('') : '<p class="empty" style="margin:0">沒有後續工作。</p>'}</div>
+  <div class="fld"><label for="fNotes">備註（匯出到 MS Project Notes）</label><textarea id="fNotes">${esc(t.notes || '')}</textarea></div>`;
+}
+function issuesPanel() {
+  if (!S.iss.length) return '<p class="empty">沒有發現問題：沒有遲於期限、沒有循環連結，也沒有約束衝突。</p>';
+  const cnt = s => S.iss.filter(i => i.sev === s).length;
+  const name = { err: '錯誤', warn: '警告', info: '提示' };
+  return `<div class="chks"><span>${cnt('err')} 錯誤</span><span>${cnt('warn')} 警告</span><span>${cnt('info')} 提示</span></div>
+  <div class="iss">${S.iss.map(i => `<button class="it ${i.sev}" data-go="${i.uid}"><span class="sv" title="${name[i.sev]}"></span><span>${esc(i.msg)}<small>${esc(i.hint || '')}</small></span></button>`).join('')}</div>`;
+}
+function pdfPanel() {
+  const o = P.print, cb = (k, l) => `<label class="chk"><input type="checkbox" data-pc="${k}"${o.cols[k] ? ' checked' : ''}>${l}</label>`;
+  const ob = (k, l) => `<label class="chk"><input type="checkbox" data-po="${k}"${o[k] ? ' checked' : ''}>${l}</label>`;
+  return `
+  <div class="fld"><label for="oTitle">標題（印在表格上方）</label><input id="oTitle" type="text" value="${esc(o.title)}" placeholder="例如 Master Programme: Contract XXXX - ..."></div>
+  <div class="row2">
+    <div class="fld"><label for="oPaper">紙張</label><select id="oPaper">${['A4', 'A3', 'A2', 'A1'].map(x => `<option${x === o.paper ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
+    <div class="fld"><label for="oOrient">方向</label><select id="oOrient"><option value="landscape"${o.orient === 'landscape' ? ' selected' : ''}>橫向</option><option value="portrait"${o.orient === 'portrait' ? ' selected' : ''}>直向</option></select></div>
+  </div>
+  <div class="row2">
+    <div class="fld"><label for="oRow">行高 (pt)</label><input id="oRow" type="text" value="${o.rowH}" placeholder="auto"></div>
+    <div class="fld"><label for="oFont">字號 (pt)</label><input id="oFont" type="number" step="0.2" min="5" max="12" value="${o.font}"></div>
+  </div>
+  <div class="fld"><label for="oTable">表格佔頁寬 ${Math.round(o.tableFrac * 100)}%</label><input id="oTable" type="range" min="0.3" max="0.7" step="0.01" value="${o.tableFrac}"></div>
+  <div class="fld"><span class="lab">欄位</span><div class="chks">${cb('id', 'ID')}${cb('ind', '標記')}${cb('dur', 'Duration')}${cb('start', 'Start')}${cb('finish', 'Finish')}${cb('pred', 'Predecessors')}${cb('dl', 'Deadline')}</div></div>
+  <div class="fld"><span class="lab">甘特圖</span><div class="chks">${ob('links', '連結線')}${ob('deadlines', '期限箭頭')}${ob('labels', '里程碑日期')}${ob('crit', '關鍵路徑紅色')}</div></div>
+  <div class="fld"><label for="oDate">頁腳日期</label><input id="oDate" type="text" value="${esc(o.printDate)}" placeholder="${esc(fmtD(todayDn()))}（留空即今日）"></div>
+  <p class="empty" style="margin:0">頁腳的版本和註記在「項目」分頁設定。行高設為 auto 時，會自動選擇最少頁數，並把行平均分配到各頁。</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="oPrev">預覽</button><button class="btn primary" id="oPdf">匯出 PDF</button></div>`;
+}
+function projPanel() {
+  const wd = [1, 2, 3, 4, 5, 6, 0].map(d => `<label class="chk"><input type="checkbox" data-wd="${d}"${P.workdays.includes(d) ? ' checked' : ''}>${WDN[d]}</label>`).join('');
+  return `
+  <div class="fld"><label for="jTitle">項目全名</label><input id="jTitle" type="text" value="${esc(P.title)}"></div>
+  <div class="row2">
+    <div class="fld"><label for="jStart">項目開始日</label><input id="jStart" type="date" value="${P.start}"></div>
+    <div class="fld"><label for="jFmt">日期格式</label><select id="jFmt"><option value="us"${P.dateFmt === 'us' ? ' selected' : ''}>Mon 1/4/27</option><option value="uk"${P.dateFmt === 'uk' ? ' selected' : ''}>Mon 04/01/27</option></select></div>
+  </div>
+  <div class="fld"><label for="jStatus">版本（頁腳）</label><input id="jStatus" type="text" value="${esc(P.status)}" placeholder="Rev. A"></div>
+  <div class="fld"><span class="lab">工作日</span><div class="chks">${wd}</div></div>
+  <div class="fld"><label for="jHol">假期（每行一個：日期 名稱）</label><textarea id="jHol" rows="5" placeholder="2027-01-01 The first day of January">${esc(P.holidays.map(h => `${h.date}${h.name ? ' ' + h.name : ''}`).join('\n'))}</textarea></div>
+  <div class="fld"><label for="jNotes">PDF 頁腳註記（每行一句，最多 3 行）</label><textarea id="jNotes" rows="4">${esc(P.notes.join('\n'))}</textarea></div>
+  <div class="sect"><h3>檔案</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="jNew">新項目</button><button class="btn" id="jSample">載入範例</button><button class="btn" id="jCsv">匯出 CSV</button></div>
+  <p class="empty" style="margin:0">工作會自動儲存在這個瀏覽器。要保留或交給同事，請按「儲存」下載 .json，或者匯出 MS Project XML。</p></div>`;
+}
+
+// ============================================================ status bar
+function renderStatus() {
+  const nErr = S.iss.filter(i => i.sev === 'err').length;
+  const wk = ((S.finish - dn(P.start)) / 7).toFixed(1);
+  const crit = S.leaves.filter(r => r.crit).length;
+  $('#status').innerHTML = `<span>開始 <b>${fmtD(dn(P.start))}</b></span><span>完成 <b>${fmtD(S.finish)}</b></span><span>工期 <b>${S.pEf - S.s0}</b> 工作天 · <b>T+${wk}</b> 週</span><span>${S.R.length} 項工作 · ${crit} 項關鍵</span><span class="pill ${nErr ? 'bad' : 'good'}">${nErr ? `${nErr} 個錯誤` : '沒有錯誤'}</span>`;
+}
+
+// ============================================================ main render
+function recalc() { schedule(); render(); autosave(); }
+function render() {
+  VIS = visibleRows();
+  $('#projName').value = P.name;
+  renderGrid(); renderGantt(); renderPanel(); renderStatus();
+  $('#bCrit').classList.toggle('on', UI.crit);
+}
+function toast(msg, ms = 2600) {
+  let t = document.querySelector('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, ms);
+}
+
+// ============================================================ selection / editing
+function visIndex(uid) { return VIS.findIndex(r => r.t.uid === uid); }
+function select(uid, ev) {
+  if (ev && (ev.ctrlKey || ev.metaKey)) { UI.sel = UI.sel.includes(uid) ? UI.sel.filter(x => x !== uid) : [...UI.sel, uid]; }
+  else if (ev && ev.shiftKey && UI.act != null) { const a = visIndex(UI.act), b = visIndex(uid); const [lo, hi] = a < b ? [a, b] : [b, a]; UI.sel = VIS.slice(lo, hi + 1).map(r => r.t.uid); if (a > b) UI.sel.reverse(); }
+  else UI.sel = [uid];
+  UI.act = uid; render();
+}
+function scrollToRow(uid, alsoChart) {
+  const vi = visIndex(uid); if (vi < 0) return;
+  const gp = $('#gridPane'), y = 46 + vi * RH;
+  if (y < gp.scrollTop + 46 || y + RH > gp.scrollTop + gp.clientHeight - 16) gp.scrollTop = y - gp.clientHeight / 2;
+  if (alsoChart) { const r = VIS[vi]; const cp = $('#chartPane'); cp.scrollLeft = Math.max(0, (r.start - GX.r0) * GX.ppd - 80); }
+}
+function goTo(uid) {
+  // expand collapsed parents
+  let r = S.byUid.get(uid); if (!r) return;
+  for (let p = r.parent; p; p = p.parent) UI.collapsed.delete(p.t.uid);
+  UI.sel = [uid]; UI.act = uid; UI.tab = 'task'; if (!UI.panel) togglePanel(true); render(); scrollToRow(uid, true);
+}
+function startEdit(uid, k, initial) {
+  const col = COLS.find(c => c.k === k); if (!col || !col.ed) return;
+  const r = S.byUid.get(uid); if (!r) return;
+  if (r.sum && (k === 'dur' || k === 'start' || k === 'finish')) return toast('摘要工作的日期由子工作決定');
+  const rowEl = document.querySelector(`.r[data-uid="${uid}"]`); if (!rowEl) return;
+  const cell = rowEl.querySelector(`[data-k="${k}"]`);
+  let val = k === 'name' ? r.t.name : k === 'dur' ? fmtDur(r.t.dur) : cellText(r, k);
+  if (initial != null) val = initial;
+  cell.innerHTML = `<input class="ed" type="text" aria-label="${esc(col.h)}">`;
+  const inp = cell.querySelector('input'); inp.value = val; inp.focus();
+  if (initial == null) inp.select(); else inp.setSelectionRange(val.length, val.length);
+  UI.editing = { uid, k, inp };
+  let done = false;
+  const finish = (commitIt, move) => {
+    if (done) return; done = true; UI.editing = null;
+    if (commitIt) commit(uid, k, inp.value); else render();
+    if (move) moveAct(move[0], move[1]);
+  };
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true, [1, 0]); }
+    else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    else if (e.key === 'Tab') { e.preventDefault(); finish(true, [0, e.shiftKey ? -1 : 1]); }
+    e.stopPropagation();
+  });
+  inp.addEventListener('blur', () => finish(true));
+}
+function commit(uid, k, v) {
+  const r = S.byUid.get(uid); if (!r) return render(); const t = r.t;
+  try {
+    if (k === 'name') { if (v.trim() === t.name) return render(); mutate(() => t.name = v.trim() || t.name); }
+    else if (k === 'dur') { const d = parseDur(v); if (d == null) throw new Error('工期格式例如 10、10d、2w、1mo'); if (d === t.dur) return render(); mutate(() => t.dur = d); }
+    else if (k === 'start') { const d = parseDate(v); if (d == null) throw new Error('看不懂這個日期'); if (d === r.start) return render(); mutate(() => t.cons = { type: 'SNET', date: isoOf(d) }, '已加上 Start No Earlier Than 約束'); }
+    else if (k === 'finish') { const d = parseDate(v); if (d == null) throw new Error('看不懂這個日期'); if (d === r.finish) return render(); mutate(() => t.cons = { type: 'FNET', date: isoOf(d) }, '已加上 Finish No Earlier Than 約束'); }
+    else if (k === 'pred') { const ps = parsePreds(v); if (ps.some(p => p.uid === uid)) throw new Error('工作不能連結到自己'); if (JSON.stringify(ps) === JSON.stringify(t.preds)) return render(); mutate(() => t.preds = ps); }
+    else if (k === 'dl') { if (!v.trim()) { if (!t.deadline) return render(); mutate(() => delete t.deadline); } else { const d = parseDate(v); if (d == null) throw new Error('看不懂這個日期'); mutate(() => t.deadline = isoOf(d)); } }
+  } catch (e) { toast(e.message); render(); }
+}
+function moveAct(dr, dc) {
+  if (UI.act == null) return;
+  let vi = visIndex(UI.act) + dr; vi = Math.max(0, Math.min(VIS.length - 1, vi));
+  let ci = EDCOLS.indexOf(UI.col); ci = Math.max(0, Math.min(EDCOLS.length - 1, (ci < 0 ? 0 : ci) + dc));
+  UI.col = EDCOLS[ci]; UI.act = VIS[vi].t.uid; UI.sel = [UI.act]; render(); scrollToRow(UI.act);
+}
+
+// ============================================================ structural edits
+function selectedIdx() { const set = new Set(UI.sel); return P.tasks.map((t, i) => set.has(t.uid) ? i : -1).filter(i => i >= 0); }
+function blockEnd(i) { const l = P.tasks[i].lvl; let j = i + 1; while (j < P.tasks.length && P.tasks[j].lvl > l) j++; return j; }
+function addTask(milestone) {
+  const ids = selectedIdx(); const at = ids.length ? blockEnd(ids[ids.length - 1]) : P.tasks.length;
+  const lvl = ids.length ? P.tasks[ids[ids.length - 1]].lvl : 1;
+  const t = { uid: uidSeq++, name: milestone ? 'New Milestone' : 'New Task', lvl, dur: milestone ? 0 : 5, preds: [] };
+  mutate(() => P.tasks.splice(at, 0, t));
+  UI.sel = [t.uid]; UI.act = t.uid; UI.col = 'name'; render(); scrollToRow(t.uid); startEdit(t.uid, 'name');
+}
+function delTasks() {
+  const ids = selectedIdx(); if (!ids.length) return toast('先選擇要刪除的工作');
+  const kill = new Set(); for (const i of ids) for (let j = i; j < blockEnd(i); j++) kill.add(P.tasks[j].uid);
+  const nextUid = (P.tasks[blockEnd(ids[ids.length - 1])] || P.tasks[ids[0] - 1] || {}).uid;
+  mutate(() => { P.tasks = P.tasks.filter(t => !kill.has(t.uid)); for (const t of P.tasks) t.preds = t.preds.filter(p => !kill.has(p.uid)); }, `已刪除 ${kill.size} 項工作（Ctrl+Z 可還原）`);
+  UI.sel = nextUid ? [nextUid] : []; UI.act = nextUid ?? null; render();
+}
+function indent(d) {
+  const ids = selectedIdx(); if (!ids.length) return;
+  mutate(() => { const done = new Set(); for (const i of ids) { const e = blockEnd(i); for (let j = i; j < e; j++) if (!done.has(j)) { P.tasks[j].lvl += d; done.add(j); } } });
+}
+function moveRows(d) {
+  const ids = selectedIdx(); if (ids.length !== 1) return toast('一次移動一項工作（連同其子工作）');
+  const i = ids[0], e = blockEnd(i), block = P.tasks.slice(i, e);
+  mutate(() => {
+    if (d < 0) { if (i === 0) return; let p = i - 1; while (p > 0 && P.tasks[p].lvl > block[0].lvl) p--; P.tasks.splice(i, e - i); P.tasks.splice(p, 0, ...block); }
+    else { if (e >= P.tasks.length) return; const ne = blockEnd(e); P.tasks.splice(i, e - i); P.tasks.splice(ne - block.length, 0, ...block); }
+  });
+}
+function linkSel() {
+  if (UI.sel.length < 2) return toast('用 Ctrl 點選兩項或以上工作，再按「連結」');
+  mutate(() => { for (let k = 1; k < UI.sel.length; k++) { const t = P.tasks.find(x => x.uid === UI.sel[k]); if (!t.preds.some(p => p.uid === UI.sel[k - 1])) t.preds.push({ uid: UI.sel[k - 1], type: 'FS', lag: 0 }); } }, `已連結 ${UI.sel.length} 項工作（FS）`);
+}
+function unlinkSel() {
+  const set = new Set(UI.sel); if (!set.size) return;
+  mutate(() => {
+    if (set.size === 1) { const u = UI.sel[0]; for (const t of P.tasks) { if (t.uid === u) t.preds = []; else t.preds = t.preds.filter(p => p.uid !== u); } }
+    else for (const t of P.tasks) if (set.has(t.uid)) t.preds = t.preds.filter(p => !set.has(p.uid));
+  }, '已取消連結');
+}
+
+// ============================================================ Gantt dragging
+let drag = null;
+function onBarDown(e) {
+  const g = e.target.closest('.bar'); if (!g) return;
+  const uid = +g.dataset.uid, r = S.byUid.get(uid); if (!r || r.sum) return;
+  const resize = e.target.classList.contains('rz');
+  drag = { uid, resize, x0: e.clientX, g, moved: false, r };
+  g.classList.add('dragging'); g.setPointerCapture(e.pointerId); e.preventDefault();
+  if (!UI.sel.includes(uid)) { UI.sel = [uid]; UI.act = uid; }
+}
+function onBarMove(e) {
+  if (!drag) return; const dx = e.clientX - drag.x0; if (Math.abs(dx) > 2) drag.moved = true;
+  if (drag.resize) { const rect = drag.g.querySelector('rect'); const w0 = (drag.r.finish + 1 - drag.r.start) * GX.ppd; rect.setAttribute('width', Math.max(3, w0 + dx)); }
+  else drag.g.setAttribute('transform', `translate(${dx} 0)`);
+  const days = Math.round(dx / GX.ppd);
+  toast(drag.resize ? `完成日 ${fmtD(drag.r.finish + days)}` : `開始日 ${fmtD(drag.r.start + days)}`, 900);
+}
+function onBarUp(e) {
+  if (!drag) return; const d = drag; drag = null; d.g.classList.remove('dragging');
+  const days = Math.round((e.clientX - d.x0) / GX.ppd), t = d.r.t;
+  if (!d.moved || !days) { render(); renderPanel(); return; }
+  if (d.resize) {
+    const endIdx = CAL.idx(d.r.finish + days); const nd = Math.max(1, endIdx - d.r.es + (CAL.isWork(d.r.finish + days) ? 1 : 0));
+    mutate(() => t.dur = nd, `工期改為 ${nd} 天`);
+  } else {
+    const ns = CAL.at(CAL.idx(d.r.start + days));
+    mutate(() => t.cons = { type: t.cons && t.cons.type === 'MSO' ? 'MSO' : 'SNET', date: isoOf(ns) }, `已設 ${t.cons && t.cons.type === 'MSO' ? 'Must Start On' : 'Start No Earlier Than'} ${fmtD(ns)}`);
+  }
+}
+
+// ============================================================ import / export
+function readMspdi(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('XML 格式錯誤，無法讀取');
+  const root = doc.documentElement; if (root.localName !== 'Project') throw new Error('這不是 MS Project XML 檔');
+  const kid = (el, n) => { if (!el) return null; for (const c of el.children) if (c.localName === n) return c; return null; };
+  const val = (el, n) => { const c = kid(el, n); return c ? c.textContent.trim() : ''; };
+  const kids = (el, n) => el ? [...el.children].filter(c => c.localName === n) : [];
+  const mpd = +val(root, 'MinutesPerDay') || 480;
+  const p = { name: val(root, 'Title') || val(root, 'Name') || 'Imported', title: val(root, 'Subject') || '', start: (val(root, 'StartDate') || isoOf(todayDn())).slice(0, 10), tasks: [], holidays: [], workdays: [1, 2, 3, 4, 5] };
+  p.name = p.name.replace(/\.xml$/i, '');
+  const calUid = val(root, 'CalendarUID');
+  const cal = kids(kid(root, 'Calendars'), 'Calendar').find(c => val(c, 'UID') === calUid) || kids(kid(root, 'Calendars'), 'Calendar')[0];
+  if (cal) {
+    const wd = new Set([1, 2, 3, 4, 5]);
+    for (const w of kids(kid(cal, 'WeekDays'), 'WeekDay')) {
+      const dt = +val(w, 'DayType'), work = val(w, 'DayWorking') === '1';
+      if (dt >= 1 && dt <= 7) { if (work) wd.add(dt - 1); else wd.delete(dt - 1); }
+      else if (dt === 0 && !work) { const tp = kid(w, 'TimePeriod'); if (tp) addHolRange(p, val(tp, 'FromDate'), val(tp, 'ToDate')); }
+    }
+    for (const x of kids(kid(cal, 'Exceptions'), 'Exception')) { if (val(x, 'DayWorking') === '1') continue; const tp = kid(x, 'TimePeriod'); if (tp) addHolRange(p, val(tp, 'FromDate'), val(tp, 'ToDate'), val(x, 'Name')); }
+    p.workdays = [...wd].sort();
+  }
+  const CT = { 0: 'ASAP', 1: 'ASAP', 2: 'MSO', 3: 'MFO', 4: 'SNET', 5: 'SNLT', 6: 'FNET', 7: 'FNLT' }, LT = { 0: 'FF', 1: 'FS', 2: 'SF', 3: 'SS' };
+  let elapsed = 0;
+  for (const tk of kids(kid(root, 'Tasks'), 'Task')) {
+    if (val(tk, 'UID') === '0' || val(tk, 'IsNull') === '1') continue;
+    const dm = val(tk, 'Duration').match(/PT(\d+(?:\.\d+)?)H(\d+(?:\.\d+)?)M/); const hours = dm ? +dm[1] + +dm[2] / 60 : 0;
+    const t = { uid: +val(tk, 'UID'), name: val(tk, 'Name'), lvl: +val(tk, 'OutlineLevel') || 1, dur: Math.round(hours * 60 / mpd), preds: [] };
+    if (val(tk, 'Milestone') === '1' && !hours) t.dur = 0;
+    const ct = CT[+val(tk, 'ConstraintType') || 0]; const cd = val(tk, 'ConstraintDate');
+    if (ct !== 'ASAP' && cd) t.cons = { type: ct, date: cd.slice(0, 10) };
+    const dl = val(tk, 'Deadline'); if (dl) t.deadline = dl.slice(0, 10);
+    const nt = val(tk, 'Notes'); if (nt) t.notes = nt;
+    for (const pl of kids(tk, 'PredecessorLink')) {
+      const lagMin = (+val(pl, 'LinkLag') || 0) / 10, fmt = +val(pl, 'LagFormat') || 7;
+      if ([4, 6, 8, 10, 12].includes(fmt) && lagMin) elapsed++;
+      t.preds.push({ uid: +val(pl, 'PredecessorUID'), type: LT[+val(pl, 'Type')] || 'FS', lag: Math.round(lagMin / mpd) });
+    }
+    p.tasks.push(t);
+  }
+  if (elapsed) setTimeout(() => toast(`${elapsed} 條連結用了日曆天 lag，已換算為工作天`), 400);
+  return p;
+}
+function addHolRange(p, a, b, name) { if (!a) return; let d = dn(a.slice(0, 10)); const e = dn((b || a).slice(0, 10)); for (; d <= e && p.holidays.length < 2000; d++) p.holidays.push({ date: isoOf(d), name: name || '' }); }
+function toMspdi() {
+  const x = s => esc(s);
+  const dt = (d, h) => `${isoOf(d)}T${pad(h)}:00:00`;
+  const dur = d => `PT${d * 8}H0M0S`;
+  const CTN = { ASAP: 0, MSO: 2, MFO: 3, SNET: 4, SNLT: 5, FNET: 6, FNLT: 7 }, LTN = { FF: 0, FS: 1, SF: 2, SS: 3 };
+  const wdays = [0, 1, 2, 3, 4, 5, 6].map(d => `<WeekDay><DayType>${d + 1}</DayType><DayWorking>${P.workdays.includes(d) ? 1 : 0}</DayWorking>${P.workdays.includes(d) ? '<WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes>' : ''}</WeekDay>`).join('');
+  const hols = P.holidays.map(h => `<WeekDay><DayType>0</DayType><DayWorking>0</DayWorking><TimePeriod><FromDate>${h.date}T00:00:00</FromDate><ToDate>${h.date}T23:59:00</ToDate></TimePeriod></WeekDay>`).join('');
+  const outline = []; const num = [];
+  const tasks = S.R.map(r => {
+    const t = r.t; num.length = t.lvl; num[t.lvl - 1] = (num[t.lvl - 1] || 0) + 1; for (let k = t.lvl; k < 10; k++) num[k] = 0;
+    const on = num.slice(0, t.lvl).join('.');
+    const msEod = !r.sum && t.dur === 0 && r.eod;
+    const st = r.sum || t.dur > 0 ? dt(r.start, 8) : dt(r.finish, msEod ? 17 : 8);
+    const fi = r.sum || t.dur > 0 ? dt(r.finish, 17) : st;
+    const c = t.cons && t.cons.type !== 'ASAP' && t.cons.date ? t.cons : null;
+    const cHour = c && (c.type === 'FNET' || c.type === 'MFO' || c.type === 'FNLT') ? 17 : 8;
+    return `<Task><UID>${t.uid}</UID><ID>${r.id}</ID><Name>${x(t.name)}</Name><Active>1</Active><Manual>0</Manual><Type>${r.sum ? 1 : 0}</Type><IsNull>0</IsNull><WBS>${on}</WBS><OutlineNumber>${on}</OutlineNumber><OutlineLevel>${t.lvl}</OutlineLevel><Priority>500</Priority><Start>${st}</Start><Finish>${fi}</Finish><Duration>${dur(r.sum ? r.dur : t.dur)}</Duration><DurationFormat>7</DurationFormat><ResumeValid>0</ResumeValid><EffortDriven>0</EffortDriven><Recurring>0</Recurring><OverAllocated>0</OverAllocated><Estimated>0</Estimated><Milestone>${!r.sum && t.dur === 0 ? 1 : 0}</Milestone><Summary>${r.sum ? 1 : 0}</Summary><Critical>${r.crit ? 1 : 0}</Critical><IsSubproject>0</IsSubproject><ConstraintType>${c ? CTN[c.type] : 0}</ConstraintType>${c ? `<ConstraintDate>${c.date}T${pad(cHour)}:00:00</ConstraintDate>` : ''}${t.deadline ? `<Deadline>${t.deadline}T17:00:00</Deadline>` : ''}<CalendarUID>-1</CalendarUID><PercentComplete>0</PercentComplete>${t.notes ? `<Notes>${x(t.notes)}</Notes>` : ''}${t.preds.filter(p => S.byUid.has(p.uid)).map(p => `<PredecessorLink><PredecessorUID>${p.uid}</PredecessorUID><Type>${LTN[p.type] ?? 1}</Type><CrossProject>0</CrossProject><LinkLag>${(+p.lag || 0) * 4800}</LinkLag><LagFormat>7</LagFormat></PredecessorLink>`).join('')}</Task>`;
+  }).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project xmlns="http://schemas.microsoft.com/project"><SaveVersion>14</SaveVersion><Name>${x(P.name)}.xml</Name><Title>${x(P.name)}</Title><Subject>${x(P.title)}</Subject><ScheduleFromStart>1</ScheduleFromStart><StartDate>${dt(dn(P.start), 8)}</StartDate><FinishDate>${dt(S.finish, 17)}</FinishDate><CalendarUID>1</CalendarUID><DefaultStartTime>08:00:00</DefaultStartTime><DefaultFinishTime>17:00:00</DefaultFinishTime><MinutesPerDay>480</MinutesPerDay><MinutesPerWeek>2400</MinutesPerWeek><DaysPerMonth>20</DaysPerMonth><DurationFormat>7</DurationFormat><WorkFormat>2</WorkFormat><NewTasksAreManual>0</NewTasksAreManual><HonorConstraints>1</HonorConstraints>
+<Calendars><Calendar><UID>1</UID><Name>Standard</Name><IsBaseCalendar>1</IsBaseCalendar><BaseCalendarUID>-1</BaseCalendarUID><WeekDays>${wdays}${hols}</WeekDays></Calendar></Calendars>
+<Tasks><Task><UID>0</UID><ID>0</ID><Name>${x(P.name)}</Name><Type>1</Type><IsNull>0</IsNull><OutlineNumber>0</OutlineNumber><OutlineLevel>0</OutlineLevel><Start>${dt(S.start, 8)}</Start><Finish>${dt(S.finish, 17)}</Finish><Summary>1</Summary><Manual>0</Manual></Task>
+${tasks}
+</Tasks></Project>`;
+}
+let dlCap;   // downloads capability promise
+function getDownloads() {
+  if (dlCap === undefined) dlCap = (window.claude && typeof window.claude.use === 'function') ? Promise.race([window.claude.use('downloads'), new Promise(r => setTimeout(() => r(null), 10000))]).catch(() => null) : Promise.resolve(null);
+  return dlCap;
+}
+async function saveFile(filename, data, mime) {
+  const dl = await getDownloads();
+  if (dl) {
+    try { await dl.save({ filename, data }); toast(`已下載 ${filename}`); }
+    catch (e) { const c = e && e.code; if (c !== 'declined') toast(c === 'rejected_extension' || c === 'extension_not_enabled' ? '這個檔案類型在這裏不能下載' : `下載失敗（${c || '未知原因'}）`); }
+    return;
+  }
+  const blob = data instanceof Blob ? data : new Blob([data], { type: mime || 'application/octet-stream' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast(`已下載 ${filename}`);
+}
+const safeName = s => (s || 'programme').replace(/[\\/:*?"<>|]+/g, '_').trim();
+async function exportXml() {
+  const xml = toMspdi(), name = safeName(P.name);
+  const dl = await getDownloads();
+  if (dl && window.JSZip) { const z = new JSZip(); z.file(`${name}.xml`, xml); const blob = await z.generateAsync({ type: 'blob' }); return saveFile(`${name}_MSProject.zip`, blob); }
+  return saveFile(`${name}.xml`, xml, 'application/xml');
+}
+function exportCsv() {
+  const q = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+  const lines = [['ID', 'Outline Level', 'Task Name', 'Duration (days)', 'Start', 'Finish', 'Predecessors', 'Deadline', 'Total Float (days)', 'Critical', 'Notes'].join(',')];
+  for (const r of S.R) lines.push([r.id, r.t.lvl, q(r.t.name), r.sum ? r.dur : r.t.dur, isoOf(r.start), isoOf(r.finish), q(predStr(r.t)), r.t.deadline || '', r.tf ?? '', r.crit ? 'Yes' : 'No', q(r.t.notes)].join(','));
+  saveFile(`${safeName(P.name)}.csv`, '﻿' + lines.join('\r\n'), 'text/csv');
+}
+function loadProject(p, msg) { undoStack.push(snapshot()); redoStack = []; P = defaults(p); UI.sel = []; UI.act = null; UI.collapsed.clear(); recalc(); if (msg) toast(msg); requestAnimationFrame(() => renderGantt()); }
+async function openFile(f) {
+  if (!f) return;
+  if (/\.mpp$/i.test(f.name)) return toast('瀏覽器讀不到 .mpp。請在 MS Project 另存為 XML 再開啟，或把 .mpp 交給 Claude 轉換。', 6000);
+  try {
+    const text = await f.text();
+    if (/^\s*</.test(text)) loadProject(readMspdi(text), `已開啟 ${f.name}`);
+    else { const p = JSON.parse(text); if (!p.tasks) throw new Error('這不是 Programme Studio 項目檔'); loadProject(p, `已開啟 ${f.name}`); }
+  } catch (e) { toast(e.message || '無法開啟檔案', 5000); }
+}
+
+// ============================================================ PDF (shared layout, jsPDF + canvas painters)
+const PAPER = { A4: [595.28, 841.89], A3: [841.89, 1190.55], A2: [1190.55, 1683.78], A1: [1683.78, 2383.94] };
+function pdfColor(k) { return { bar: '#5b5bf0', barEdge: '#1f1fa8', barHi: '#a8a8ff', crit: '#e5484d', critEdge: '#9b1c1f', sum: '#333333', link: '#2222cc', grid: '#b0b0b0', row: '#9a9a9a', dl: '#2e9a2e', cons: '#5050a0', consBg: '#e8e8f8', late: '#c22f32', black: '#000000', white: '#ffffff' }[k]; }
+function pdfLayout(measure) {
+  const o = P.print; let [w, h] = PAPER[o.paper] || PAPER.A3; if (o.orient === 'landscape') [w, h] = [h, w];
+  const M = 28, L = M, Rr = w - M, title = (o.title || '').trim(), titleH = title ? 24 : 0, hdrH = 24, legendH = 46, stripH = 14;
+  const top = M + titleH, rowsTop = top + hdrH, rowsBottom = h - M - stripH - legendH - 12, avail = rowsBottom - rowsTop;
+  const rows = S.R, n = Math.max(1, rows.length);
+  let rowH;
+  if (String(o.rowH).trim().toLowerCase() === 'auto' || !(+o.rowH > 0)) { const minRH = 9, maxRH = 15; const per = Math.max(1, Math.floor(avail / minRH)); const pages = Math.ceil(n / per); rowH = Math.min(maxRH, avail / Math.ceil(n / pages)); }
+  else rowH = Math.max(6, +o.rowH);
+  const cap = Math.max(1, Math.floor(avail / rowH + 1e-6));
+  const pages = []; let cur = [];
+  for (const r of rows) { cur.push(r); if (cur.length === cap) { if (cur.length > 1 && cur[cur.length - 1].sum) { const last = cur.pop(); pages.push(cur); cur = [last]; } else { pages.push(cur); cur = []; } } }
+  if (cur.length || !pages.length) pages.push(cur);
+  const fs = Math.min(+o.font || 7.6, rowH * 0.74), k = fs / 7.6;
+  const defs = [{ c: 'id', h: 'ID', w: 24, al: 'center' }, { c: 'ind', h: '', w: 18 }, { c: 'name', h: 'Task Name', w: 0 }, { c: 'dur', h: 'Duration', w: 44, al: 'right' }, { c: 'start', h: 'Start', w: 54, al: 'right' }, { c: 'finish', h: 'Finish', w: 54, al: 'right' }, { c: 'pred', h: 'Predecessors', w: 58 }, { c: 'dl', h: 'Deadline', w: 54, al: 'right' }];
+  const cols = defs.filter(d => d.c === 'name' || o.cols[d.c]).map(d => ({ ...d, w: d.w * k }));
+  let tableW = (Rr - L) * (+o.tableFrac || 0.47); const fixed = cols.reduce((s, c) => s + c.w, 0);
+  cols.find(c => c.c === 'name').w = Math.max(120, tableW - fixed); tableW = cols.reduce((s, c) => s + c.w, 0);
+  let x = L; for (const c of cols) { c.x = x; x += c.w; }
+  const GXp = L + tableW;
+  const [r0, r1] = chartRange(); const mode = autoTier(r0, r1);
+  return { o, w, h, M, L, R: Rr, title, titleH, top, hdrH, rowsTop, rowsBottom, rowH, pages, fs, cols, GX: GXp, r0, r1, mode, ppt: (Rr - GXp) / (r1 - r0), legendH, stripH };
+}
+function drawPdfPage(pt, Lo, pi) {
+  const { o, L, R, top, hdrH, rowsTop, rowsBottom, rowH, fs, cols, GX: gx, r0, r1, mode, ppt } = Lo;
+  const X = d => gx + (d - r0) * ppt, rows = Lo.pages[pi], C = pdfColor;
+  const ly = rowsBottom + 12, lb = ly + Lo.legendH, pb = lb + Lo.stripH;
+  // frame + title
+  pt.stroke(C('black'), 0.8);
+  if (Lo.title) { pt.rect(L, Lo.M, R - L, Lo.titleH, 'S'); let tsz = 12.5; pt.font(tsz, true); while (pt.width(Lo.title) > R - L - 20 && tsz > 7) { tsz -= 0.5; pt.font(tsz, true); } pt.text(Lo.title, (L + R) / 2, Lo.M + Lo.titleH / 2 + tsz * 0.35, 'center'); }
+  pt.rect(L, top, R - L, pb - top, 'S');
+  // table header
+  pt.stroke(C('black'), 0.4); pt.font(fs, false);
+  for (const c of cols) { pt.line(c.x, top, c.x, rowsBottom); if (c.h) pt.text(c.h, c.al === 'right' || c.al === 'center' ? c.x + c.w / 2 : c.x + 3, top + 10, c.al === 'right' || c.al === 'center' ? 'center' : undefined); }
+  // timescale
+  const [tu, bu] = TIERS[mode];
+  pt.line(gx, top + 12, R, top + 12);
+  const fitL = (labels, wd, size) => { pt.font(size, false); return labels.find(l => pt.width(l) + 4 <= wd) ?? ''; };
+  for (const s of segments(tu, r0, r1)) { const xa = X(s.a), xb = X(s.b); pt.stroke(C('black'), 0.4); pt.line(xb, top, xb, top + 12); const lab = fitL(unitLabels(tu, s.a0, true), xb - xa, fs * 0.9); if (lab) pt.text(lab, xa + 2, top + 9); }
+  for (const s of segments(bu, r0, r1)) { const xa = X(s.a), xb = X(s.b); pt.stroke(C('black'), 0.4); pt.line(xb, top + 12, xb, top + hdrH); const lab = fitL(unitLabels(bu, s.a0, false), xb - xa, fs * 0.85); if (lab) pt.text(lab, (xa + xb) / 2, top + 21, 'center'); }
+  for (const s of segments(tu, r0, r1)) { pt.stroke(C('grid'), 0.4, [1, 2]); pt.line(X(s.a), rowsTop, X(s.a), rowsBottom); }
+  pt.stroke(C('black'), 0.4);
+  // rows
+  const pos = new Map();
+  rows.forEach((r, i) => {
+    const yt = rowsTop + i * rowH, yb = yt + rowH, ym = yt + rowH / 2, t = r.t, bold = r.sum || /^completion of (the )?whole/i.test(t.name);
+    pt.stroke(C('row'), 0.4); pt.line(L, yb, gx, yb);
+    const ty = ym + fs * 0.34;
+    for (const c of cols) {
+      pt.font(fs, bold && c.c !== 'id');
+      if (c.c === 'id') pt.text(String(r.id), c.x + c.w / 2, ty, 'center');
+      else if (c.c === 'ind') {
+        if (t.cons && t.cons.type !== 'ASAP') { const ix = c.x + c.w / 2 - 5; pt.stroke(C('cons'), 0.4); pt.fill(C('consBg')); pt.rect(ix, ym - 3.5, 10, 7, 'FD'); pt.fill(C('cons')); pt.rect(ix, ym - 3.5, 10, 1.6, 'F'); }
+        if (t.deadline && r.finish > dn(t.deadline)) { pt.fill(C('late')); pt.poly([[c.x + c.w - 4, ym - 3], [c.x + c.w - 1, ym + 3], [c.x + c.w - 7, ym + 3]], 'F'); }
+      } else if (c.c === 'name') {
+        const ind = (t.lvl - 1) * 9 * (fs / 7.6), maxw = c.w - 6 - ind; let s = t.name;
+        if (pt.width(s) > maxw) { while (s.length && pt.width(s + '…') > maxw) s = s.slice(0, -1); s += '…'; }
+        pt.text(s, c.x + 3 + ind, ty);
+      } else {
+        const v = c.c === 'dur' ? fmtDur(r.sum ? r.dur : t.dur) : c.c === 'start' ? fmtD(r.start) : c.c === 'finish' ? fmtD(r.finish) : c.c === 'pred' ? predStr(t) : (t.deadline ? fmtD(dn(t.deadline)) : '');
+        if (c.al === 'right') pt.text(v, c.x + c.w - 3, ty, 'right'); else pt.text(v, c.x + 3, ty);
+      }
+    }
+    const crit = o.crit && r.crit, bh = Math.min(6.4, rowH * 0.5);
+    if (r.sum) {
+      const xa = X(r.start), xb = X(r.finish + 1); pt.fill(C('sum')); pt.rect(xa, ym - 1, xb - xa, 2.6, 'F');
+      for (const xx of [xa, xb]) pt.poly([[xx - 2.8, ym - 1], [xx + 2.8, ym - 1], [xx, ym + 3.8]], 'F');
+      pos.set(t.uid, { y: ym, x1: xa, x2: xb });
+    } else if (t.dur === 0) {
+      const xx = X(r.finish + (r.eod ? 1 : 0)), s = Math.min(3.4, rowH * 0.3); pt.fill(crit ? C('crit') : '#303030');
+      pt.poly([[xx, ym - s], [xx + s, ym], [xx, ym + s], [xx - s, ym]], 'F');
+      if (o.labels) { pt.font(fs * 0.9, true); pt.text(fmtShort(r.finish), xx + s + 2, ym + fs * 0.3); }
+      pos.set(t.uid, { y: ym, x1: xx, x2: xx, ms: true });
+    } else {
+      const xa = X(r.start), xb = X(r.finish + 1);
+      pt.stroke(crit ? C('critEdge') : C('barEdge'), 0.4); pt.fill(crit ? C('crit') : C('bar')); pt.rrect(xa, ym - bh / 2, Math.max(xb - xa, 1.5), bh, 1.2, 'FD');
+      pt.fill(crit ? '#f5a3a5' : C('barHi')); pt.rect(xa + 0.6, ym - bh / 2 + bh * 0.68 - 1.6, Math.max(xb - xa - 1.2, 0.3), 1, 'F');
+      pos.set(t.uid, { y: ym, x1: xa, x2: xb });
+    }
+    if (o.deadlines && t.deadline) { const xx = X(dn(t.deadline) + 1); pt.stroke(C('dl'), 0.6); pt.line(xx, ym - 4.2, xx, ym + 0.5); pt.fill(C('dl')); pt.poly([[xx - 2, ym - 0.6], [xx + 2, ym - 0.6], [xx, ym + 2.6]], 'F'); }
+  });
+  if (o.links) {
+    pt.stroke(C('link'), 0.45); pt.fill(C('link'));
+    for (const r of rows) for (const p of r.t.preds) {
+      const a = pos.get(p.uid), b = pos.get(r.t.uid); if (!a || !b) continue;
+      const pr = S.byUid.get(p.uid); if (pr && r.start - pr.finish > 30) continue;
+      const type = p.type || 'FS', sx = (type === 'SS' || type === 'SF') ? a.x1 : a.x2, tx = (type === 'FS' || type === 'SS') ? b.x1 : b.x2, down = b.y > a.y, bh = b.ms ? 3.6 : Math.min(3.2, rowH * 0.25);
+      if ((type === 'FS' || type === 'SS') && tx >= sx + 2) {
+        const xx = Math.max(tx + 1.2, sx + 2), ty = down ? b.y - bh : b.y + bh;
+        pt.line(sx, a.y, xx, a.y); pt.line(xx, a.y, xx, ty);
+        pt.poly(down ? [[xx - 1.6, ty - 2.4], [xx + 1.6, ty - 2.4], [xx, ty]] : [[xx - 1.6, ty + 2.4], [xx + 1.6, ty + 2.4], [xx, ty]], 'F');
+      } else {
+        const mid = down ? b.y - rowH / 2 : b.y + rowH / 2, out = (type === 'SS' || type === 'SF') ? -3 : 3, ex = (type === 'FS' || type === 'SS') ? tx - 3 : tx + 3;
+        pt.line(sx, a.y, sx + out, a.y); pt.line(sx + out, a.y, sx + out, mid); pt.line(sx + out, mid, ex, mid); pt.line(ex, mid, ex, b.y);
+        const dir = (type === 'FS' || type === 'SS') ? 1 : -1; pt.line(ex, b.y, tx - dir * 2.2, b.y);
+        pt.poly([[tx, b.y], [tx - dir * 2.4, b.y - 1.6], [tx - dir * 2.4, b.y + 1.6]], 'F');
+      }
+    }
+  }
+  // strong separators
+  pt.stroke(C('black'), 0.4); pt.line(L, rowsBottom, R, rowsBottom);
+  pt.stroke(C('black'), 1.0); pt.line(gx, top, gx, rowsBottom); pt.line(L, rowsTop, R, rowsTop);
+  pt.stroke(C('black'), 0.4); pt.line(L, rowsBottom, L, ly); pt.line(gx, rowsBottom, gx, ly);
+  // legend
+  pt.stroke(C('black'), 0.8); pt.line(L, ly, R, ly); pt.stroke(C('black'), 0.4); pt.line(L, lb, R, lb);
+  const boxW = 170; pt.line(L + boxW, ly, L + boxW, lb);
+  const lf = 6.8; pt.font(lf, false);
+  const pdate = (o.printDate || '').trim() || fmtD(todayDn());
+  pt.text(`Project: ${P.name}`, L + 5, ly + 14); pt.text(`Date: ${pdate}`, L + 5, ly + 24); if (P.status) pt.text(P.status, L + 5, ly + 34);
+  let gxL = L + boxW + 14; const it = (label, draw) => { pt.font(lf, false); pt.text(label, gxL, ly + 14); draw(gxL, ly + 14); };
+  const items = [
+    ['Task', (x, y) => { pt.stroke(C('barEdge'), 0.4); pt.fill(C('bar')); pt.rrect(x + 52, y - 5, 56, 5.2, 1.2, 'FD'); }],
+    ...(o.crit ? [['Critical Task', (x, y) => { pt.stroke(C('critEdge'), 0.4); pt.fill(C('crit')); pt.rrect(x + 52, y - 5, 56, 5.2, 1.2, 'FD'); }]] : []),
+    ['Milestone', (x, y) => { pt.fill('#303030'); const cx = x + 80, cy = y - 2.4; pt.poly([[cx, cy - 3.4], [cx + 3.4, cy], [cx, cy + 3.4], [cx - 3.4, cy]], 'F'); }],
+    ['Summary', (x, y) => { pt.fill(C('sum')); pt.rect(x + 52, y - 5, 56, 2.6, 'F'); pt.poly([[x + 49.2, y - 5], [x + 54.8, y - 5], [x + 52, y - 0.2]], 'F'); pt.poly([[x + 105.2, y - 5], [x + 110.8, y - 5], [x + 108, y - 0.2]], 'F'); }],
+    ['Deadline', (x, y) => { const cx = x + 80; pt.stroke(C('dl'), 0.6); pt.line(cx, y - 8, cx, y - 3); pt.fill(C('dl')); pt.poly([[cx - 2, y - 4], [cx + 2, y - 4], [cx, y - 0.6]], 'F'); }],
+    ['Link', (x, y) => { pt.stroke(C('link'), 0.45); pt.line(x + 52, y - 3, x + 100, y - 3); pt.line(x + 100, y - 3, x + 100, y + 1); }],
+    ['Constraint', (x, y) => { pt.stroke(C('cons'), 0.4); pt.fill(C('consBg')); pt.rect(x + 75, y - 6, 10, 7, 'FD'); pt.fill(C('cons')); pt.rect(x + 75, y - 6, 10, 1.6, 'F'); }],
+  ];
+  // two rows of legend items
+  const colW = 130, perRow = Math.ceil(items.length / 2);
+  items.forEach((itm, k) => { const cx = L + boxW + 14 + (k % perRow) * colW, cy = ly + 14 + Math.floor(k / perRow) * 15; pt.font(lf, false); pt.text(itm[0], cx, cy); itm[1](cx, cy); });
+  const notesX = L + boxW + 14 + perRow * colW + 10;
+  if (P.notes.length && notesX < R - 60) {
+    pt.font(6.4, false); let yy = ly + 13; const maxw = R - notesX - 6;
+    for (const raw of P.notes.slice(0, 3)) { let line = ''; for (const wd of raw.split(' ')) { const tst = line ? line + ' ' + wd : wd; if (pt.width(tst) > maxw && line) { pt.text(line, notesX, yy); yy += 8.5; line = wd; } else line = tst; } if (line) { pt.text(line, notesX, yy); yy += 8.5; } if (yy > lb - 3) break; }
+  }
+  pt.font(lf, false); pt.text(`Page ${pi + 1} of ${Lo.pages.length}`, (L + R) / 2, lb + 10, 'center');
+}
+function jsPainter(doc) {
+  let tc = '#000000';
+  return {
+    stroke(c, w, dash) { doc.setDrawColor(c); doc.setLineWidth(w); doc.setLineDashPattern(dash || [], 0); },
+    fill(c) { doc.setFillColor(c); },
+    line(a, b, c, d) { doc.line(a, b, c, d); },
+    rect(x, y, w, h, m) { doc.rect(x, y, w, h, m); },
+    rrect(x, y, w, h, r, m) { doc.roundedRect(x, y, w, h, Math.min(r, w / 2), Math.min(r, h / 2), m); },
+    poly(pts, m) { const d = []; for (let i = 1; i < pts.length; i++) d.push([pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]]); doc.lines(d, pts[0][0], pts[0][1], [1, 1], m, true); },
+    font(size, bold) { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); doc.setTextColor(tc); },
+    text(s, x, y, align) { doc.text(String(s), x, y, align ? { align } : undefined); },
+    width(s) { return doc.getTextWidth(String(s)); },
+  };
+}
+function canvasPainter(ctx) {
+  let mode = { stroke: '#000', fill: '#000' };
+  const path = (pts) => { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) ctx.lineTo(p[0], p[1]); ctx.closePath(); };
+  const paint = m => { if (m.includes('F')) ctx.fill(); if (m.includes('S') || m === 'FD' || m === 'DF') ctx.stroke(); };
+  return {
+    stroke(c, w, dash) { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.setLineDash(dash || []); },
+    fill(c) { ctx.fillStyle = c; mode.fill = c; },
+    line(a, b, c, d) { ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); },
+    rect(x, y, w, h, m) { ctx.beginPath(); ctx.rect(x, y, w, h); paint(m); },
+    rrect(x, y, w, h, r, m) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); else ctx.rect(x, y, w, h); paint(m); },
+    poly(pts, m) { path(pts); paint(m); },
+    font(size, bold) { ctx.font = `${bold ? 'bold ' : ''}${size}px Helvetica, Arial, sans-serif`; ctx.fillStyle = '#000'; },
+    text(s, x, y, align) { const f = ctx.fillStyle; ctx.fillStyle = '#000'; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(String(s), x, y); ctx.fillStyle = f; },
+    width(s) { return ctx.measureText(String(s)).width; },
+  };
+}
+async function exportPdf() {
+  if (!window.jspdf) return toast('PDF 元件未載入，請檢查網絡後重新整理頁面');
+  const { jsPDF } = window.jspdf; const o = P.print;
+  const Lo = pdfLayout();
+  const fmt = (o.paper || 'A3').toLowerCase();
+  const doc = new jsPDF({ orientation: o.orient, unit: 'pt', format: fmt });
+  doc.setProperties({ title: o.title || P.name, subject: P.title || '', creator: 'Programme Studio' });
+  const pt = jsPainter(doc);
+  Lo.pages.forEach((_, i) => { if (i) doc.addPage(fmt, o.orient); drawPdfPage(pt, Lo, i); });
+  await saveFile(`${safeName(P.name)}.pdf`, doc.output('blob'), 'application/pdf');
+}
+function showPreview() {
+  const Lo = pdfLayout(), body = $('#mBody'); body.innerHTML = '';
+  const avail = Math.min(body.clientWidth || window.innerWidth - 80, 1500), scale = Math.max(1, avail / Lo.w) * (window.devicePixelRatio || 1);
+  Lo.pages.forEach((_, i) => {
+    const cv = document.createElement('canvas'); cv.width = Math.round(Lo.w * scale); cv.height = Math.round(Lo.h * scale);
+    cv.style.width = Math.min(avail, Lo.w * 2) + 'px'; const ctx = cv.getContext('2d'); ctx.scale(scale, scale); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, Lo.w, Lo.h);
+    drawPdfPage(canvasPainter(ctx), Lo, i); body.appendChild(cv);
+    const lab = document.createElement('div'); lab.className = 'pgl'; lab.textContent = `第 ${i + 1} 頁，共 ${Lo.pages.length} 頁`; body.appendChild(lab);
+  });
+  $('#mInfo').textContent = `${P.print.paper} ${P.print.orient === 'landscape' ? '橫向' : '直向'} · ${Lo.pages.length} 頁 · 行高 ${Lo.rowH.toFixed(1)}pt · 字號 ${Lo.fs.toFixed(1)}pt`;
+}
+
+// ============================================================ events
+function togglePanel(force) { UI.panel = force ?? !UI.panel; $('#panel').hidden = !UI.panel; $('#bPanel').classList.toggle('on', UI.panel); requestAnimationFrame(renderGantt); }
+function bind() {
+  const gp = $('#gridPane'), cp = $('#chartPane'); let lock = false;
+  gp.addEventListener('scroll', () => { if (lock) { lock = false; return; } if (cp.scrollTop !== gp.scrollTop) { lock = true; cp.scrollTop = gp.scrollTop; } });
+  cp.addEventListener('scroll', () => { if (lock) { lock = false; return; } if (gp.scrollTop !== cp.scrollTop) { lock = true; gp.scrollTop = cp.scrollTop; } });
+  $('#grid').addEventListener('mousedown', e => {
+    const tg = e.target.closest('[data-tog]'); if (tg) { e.preventDefault(); const u = +tg.dataset.tog; UI.collapsed.has(u) ? UI.collapsed.delete(u) : UI.collapsed.add(u); render(); return; }
+    if (e.target.closest('input.ed')) return;
+    const row = e.target.closest('.r[data-uid]'); if (row) { const c = e.target.closest('[data-k]'); if (c && EDCOLS.includes(c.dataset.k)) UI.col = c.dataset.k; select(+row.dataset.uid, e); return; }
+    if (e.target.closest('[data-add]')) { e.preventDefault(); UI.sel = []; addTask(false); }
+  });
+  $('#grid').addEventListener('dblclick', e => { const row = e.target.closest('.r[data-uid]'), c = e.target.closest('[data-k]'); if (row && c) startEdit(+row.dataset.uid, c.dataset.k); });
+  const gsvg = $('#gantt');
+  gsvg.addEventListener('pointerdown', e => { if (e.target.closest('.bar')) return onBarDown(e); const vi = Math.floor(e.offsetY / RH); if (VIS[vi]) select(VIS[vi].t.uid, e); });
+  gsvg.addEventListener('pointermove', onBarMove); gsvg.addEventListener('pointerup', onBarUp); gsvg.addEventListener('pointercancel', () => { drag = null; render(); });
+  gsvg.addEventListener('dblclick', e => { const g = e.target.closest('.bar'); if (g) goTo(+g.dataset.uid); });
+  // splitter
+  const sp = $('#split'); let sx = null, sw = 0;
+  sp.addEventListener('pointerdown', e => { sx = e.clientX; sw = gp.offsetWidth; sp.setPointerCapture(e.pointerId); });
+  sp.addEventListener('pointermove', e => { if (sx == null) return; gp.style.width = Math.max(200, sw + e.clientX - sx) + 'px'; });
+  sp.addEventListener('pointerup', () => { sx = null; renderGantt(); try { localStorage.setItem('programme-studio.split', gp.style.width); } catch (e) { } });
+  sp.addEventListener('keydown', e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { gp.style.width = Math.max(200, gp.offsetWidth + (e.key === 'ArrowLeft' ? -40 : 40)) + 'px'; renderGantt(); } });
+  // toolbar
+  const on = (id, fn) => $(id).addEventListener('click', fn);
+  on('#bOpen', () => $('#fileIn').click()); $('#fileIn').addEventListener('change', e => { openFile(e.target.files[0]); e.target.value = ''; });
+  on('#bSave', () => saveFile(`${safeName(P.name)}.json`, JSON.stringify(P, null, 1), 'application/json'));
+  on('#bXml', exportXml); on('#bPdf', exportPdf); on('#bPrev', () => { $('#modal').hidden = false; showPreview(); });
+  on('#mClose', () => $('#modal').hidden = true); on('#mPdf', exportPdf);
+  on('#bUndo', undo); on('#bRedo', redo); on('#bAdd', () => addTask(false)); on('#bMs', () => addTask(true)); on('#bDel', delTasks);
+  on('#bIn', () => indent(1)); on('#bOut', () => indent(-1)); on('#bUp', () => moveRows(-1)); on('#bDown', () => moveRows(1));
+  on('#bLink', linkSel); on('#bUnlink', unlinkSel); on('#bCrit', () => { UI.crit = !UI.crit; render(); });
+  on('#bGoto', () => { if (UI.act != null) scrollToRow(UI.act, true); }); on('#bPanel', () => togglePanel());
+  $('#zoom').addEventListener('change', e => { UI.zoom = e.target.value; renderGantt(); });
+  $('#projName').addEventListener('change', e => { const v = e.target.value.trim(); if (v && v !== P.name) mutate(() => P.name = v); });
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { UI.tab = b.dataset.tab; renderPanel(); }));
+  // panel delegation
+  const pb = $('#pbody');
+  pb.addEventListener('click', e => {
+    const go = e.target.closest('[data-go]'); if (go) return goTo(+go.dataset.go);
+    const rm = e.target.closest('[data-prm]'); if (rm) { const t = selRow().t, k = +rm.dataset.prm; return mutate(() => t.preds.splice(k, 1)); }
+    const id = e.target.id;
+    if (id === 'pAdd') { const r = selRow(); const prev = S.R[r.i - 1]; return mutate(() => r.t.preds.push({ uid: prev && prev.t.uid !== r.t.uid ? prev.t.uid : S.R[0].t.uid, type: 'FS', lag: 0 })); }
+    if (id === 'oPrev') { $('#modal').hidden = false; showPreview(); } if (id === 'oPdf') exportPdf();
+    if (id === 'jNew') loadProject({ name: 'New Project', start: isoOf(todayDn()), tasks: [{ uid: 1, name: 'Project Start', lvl: 1, dur: 0, preds: [] }] }, '已建立新項目（Ctrl+Z 可還原）');
+    if (id === 'jSample' && SAMPLE) loadProject(JSON.parse(JSON.stringify(SAMPLE)), '已載入範例');
+    if (id === 'jCsv') exportCsv();
+  });
+  pb.addEventListener('change', e => {
+    const el = e.target, r = selRow(), t = r && r.t, v = el.value;
+    try {
+      switch (el.id) {
+        case 'fName': if (v.trim()) mutate(() => t.name = v.trim()); return;
+        case 'fDur': { const d = parseDur(v); if (d == null) throw new Error('工期格式例如 10、10d、2w'); mutate(() => t.dur = d); return; }
+        case 'fDl': mutate(() => { if (v) t.deadline = v; else delete t.deadline; }); return;
+        case 'fCt': mutate(() => { if (v === 'ASAP') delete t.cons; else t.cons = { type: v, date: (t.cons && t.cons.date) || isoOf(r.start) }; }); return;
+        case 'fCd': if (v) mutate(() => t.cons = { type: (t.cons && t.cons.type) || 'SNET', date: v }); return;
+        case 'fNotes': mutate(() => { if (v.trim()) t.notes = v; else delete t.notes; }); return;
+        case 'oTitle': mutate(() => P.print.title = v); return;
+        case 'oPaper': mutate(() => P.print.paper = v); return;
+        case 'oOrient': mutate(() => P.print.orient = v); return;
+        case 'oRow': mutate(() => P.print.rowH = v.trim() === '' ? 'auto' : v.trim()); return;
+        case 'oFont': mutate(() => P.print.font = Math.min(12, Math.max(5, +v || 7.6))); return;
+        case 'oTable': mutate(() => P.print.tableFrac = +v); return;
+        case 'oDate': mutate(() => P.print.printDate = v); return;
+        case 'jTitle': mutate(() => P.title = v); return;
+        case 'jStart': if (v) mutate(() => P.start = v); return;
+        case 'jFmt': mutate(() => P.dateFmt = v); return;
+        case 'jStatus': mutate(() => P.status = v); return;
+        case 'jHol': mutate(() => P.holidays = v.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const d = parseDate(l.split(/\s+/)[0]); return d == null ? null : { date: isoOf(d), name: l.split(/\s+/).slice(1).join(' ') }; }).filter(Boolean)); return;
+        case 'jNotes': mutate(() => P.notes = v.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3)); return;
+      }
+      if (el.dataset.pc) return mutate(() => P.print.cols[el.dataset.pc] = el.checked);
+      if (el.dataset.po) return mutate(() => P.print[el.dataset.po] = el.checked);
+      if (el.dataset.wd != null) { const d = +el.dataset.wd; return mutate(() => P.workdays = el.checked ? [...new Set([...P.workdays, d])].sort() : P.workdays.filter(x => x !== d)); }
+      if (el.dataset.pk != null) {
+        const k = +el.dataset.pk, f = el.dataset.pf, p = t.preds[k];
+        if (f === 'id') { const pr = S.R[+v - 1]; if (!pr) throw new Error(`沒有 ID ${v} 這項工作`); if (pr.t.uid === t.uid) throw new Error('工作不能連結到自己'); return mutate(() => p.uid = pr.t.uid); }
+        if (f === 'type') return mutate(() => p.type = v);
+        if (f === 'lag') return mutate(() => p.lag = Math.round(+v || 0));
+      }
+    } catch (err) { toast(err.message); renderPanel(); }
+  });
+  pb.addEventListener('input', e => { if (e.target.id === 'oTable') { const l = e.target.previousElementSibling; if (l) l.textContent = `表格佔頁寬 ${Math.round(e.target.value * 100)}%`; } });
+  // keyboard
+  document.addEventListener('keydown', e => {
+    if (!$('#modal').hidden) { if (e.key === 'Escape') $('#modal').hidden = true; return; }
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    const inField = /INPUT|TEXTAREA|SELECT/.test(tag);
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === 'z' && !inField) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (mod && e.key.toLowerCase() === 'y' && !inField) { e.preventDefault(); redo(); return; }
+    if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); saveFile(`${safeName(P.name)}.json`, JSON.stringify(P, null, 1), 'application/json'); return; }
+    if (inField) return;
+    if (e.key === 'F2' && mod) { e.preventDefault(); e.shiftKey ? unlinkSel() : linkSel(); return; }
+    if (e.altKey && e.shiftKey) { const m = { ArrowRight: () => indent(1), ArrowLeft: () => indent(-1), ArrowUp: () => moveRows(-1), ArrowDown: () => moveRows(1) }[e.key]; if (m) { e.preventDefault(); m(); return; } }
+    if (e.key === 'Insert') { e.preventDefault(); addTask(false); return; }
+    if (UI.act == null) return;
+    if (e.key === 'Delete') { e.preventDefault(); delTasks(); return; }
+    const mv = { ArrowDown: [1, 0], ArrowUp: [-1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
+    if (mv) { e.preventDefault(); moveAct(...mv); return; }
+    if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); startEdit(UI.act, UI.col); return; }
+    if (e.key.length === 1 && !mod && !e.altKey) { e.preventDefault(); startEdit(UI.act, UI.col, e.key); }
+  });
+  // drag & drop files
+  let dropEl = null;
+  window.addEventListener('dragover', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { e.preventDefault(); if (!dropEl) { dropEl = document.createElement('div'); dropEl.className = 'drop'; dropEl.textContent = '放開即開啟 XML / JSON'; document.body.appendChild(dropEl); } } });
+  window.addEventListener('dragleave', e => { if (e.relatedTarget == null && dropEl) { dropEl.remove(); dropEl = null; } });
+  window.addEventListener('drop', e => { if (dropEl) { dropEl.remove(); dropEl = null; } if (e.dataTransfer?.files?.length) { e.preventDefault(); openFile(e.dataTransfer.files[0]); } });
+  window.addEventListener('resize', () => { if (UI.zoom === 'fit') renderGantt(); });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => renderGantt());
+  new MutationObserver(() => renderGantt()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+// ============================================================ boot
+(function init() {
+  let saved = null; try { saved = localStorage.getItem('programme-studio.v1'); } catch (e) { }
+  try { P = defaults(saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(SAMPLE || { name: 'New Project', tasks: [] }))); } catch (e) { P = defaults(JSON.parse(JSON.stringify(SAMPLE))); }
+  try { const w = localStorage.getItem('programme-studio.split'); if (w) $('#gridPane').style.width = w; } catch (e) { }
+  if (window.innerWidth < 900) UI.panel = false;
+  $('#panel').hidden = !UI.panel; $('#bPanel').classList.toggle('on', UI.panel);
+  bind(); recalc();
+  requestAnimationFrame(() => renderGantt());
+})();
+</script>
+</body></html>
